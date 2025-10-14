@@ -39,7 +39,7 @@ export default function ImportPage() {
   const [showModal, setShowModal] = useState(false);
   const [analysisConfig, setAnalysisConfig] = useState<AnalysisConfig>({
     depth: 20,
-    find_alternatives: true,
+    find_alternatives: false,
   });
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState<string[]>([]);

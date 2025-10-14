@@ -10,8 +10,8 @@ import {
 } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
-  title: "Remotion and Next.js",
-  description: "Remotion and Next.js",
+  title: "chessmoments.com",
+  description: "Chess game analysis and visualization",
 };
 
 export const viewport: Viewport = {

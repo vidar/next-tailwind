@@ -18,6 +18,12 @@ export default function Home() {
         >
           Import Chess Games
         </Link>
+        <Link
+          href="/analyzed_games"
+          className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 text-center"
+        >
+          View Analyzed Games
+        </Link>
       </div>
     </div>
   );
