@@ -150,3 +150,15 @@ export async function getVideosByUserId(userId: string): Promise<Video[]> {
   );
   return result.rows;
 }
+
+export async function updateVideoMetadata(
+  videoId: string,
+  metadata: any
+): Promise<Video> {
+  const pool = getPool();
+  const result = await pool.query(
+    `UPDATE videos SET metadata = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+    [videoId, JSON.stringify(metadata)]
+  );
+  return result.rows[0];
+}

@@ -37,6 +37,8 @@ export default function AnalyzedGameDetailPage() {
   const [isPgnOpen, setIsPgnOpen] = useState(false);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [existingVideos, setExistingVideos] = useState<any[]>([]);
+  const [uploadingVideoId, setUploadingVideoId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Chess rendering hook
   const { renderMedia, state: renderState, undo } = useChessRendering(id);
@@ -117,6 +119,39 @@ export default function AnalyzedGameDetailPage() {
       setExistingVideos(data.videos.filter((v: any) => v.status === "completed"));
     } catch (err) {
       console.error("Failed to fetch videos:", err);
+    }
+  };
+
+  const uploadToYouTube = async (videoId: string) => {
+    setUploadingVideoId(videoId);
+    setUploadError(null);
+
+    try {
+      const response = await fetch("/api/youtube/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to upload to YouTube");
+      }
+
+      const data = await response.json();
+
+      // Refresh videos to show YouTube URL
+      await fetchVideos();
+
+      // Open YouTube video in new tab
+      if (data.youtubeUrl) {
+        window.open(data.youtubeUrl, "_blank");
+      }
+    } catch (err) {
+      console.error("YouTube upload error:", err);
+      setUploadError(err instanceof Error ? err.message : "Failed to upload to YouTube");
+    } finally {
+      setUploadingVideoId(null);
     }
   };
 
@@ -330,27 +365,61 @@ export default function AnalyzedGameDetailPage() {
         {existingVideos.length > 0 && renderState.status !== "done" && (
           <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Rendered Videos</h2>
+            {uploadError && (
+              <div className="mb-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 rounded-lg p-4">
+                <p className="font-medium">Upload Error</p>
+                <p className="text-sm">{uploadError}</p>
+              </div>
+            )}
             <div className="space-y-3">
               {existingVideos.map((video) => (
                 <div
                   key={video.id}
                   className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
                 >
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">
                       {video.composition_type.charAt(0).toUpperCase() + video.composition_type.slice(1)} Video
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Rendered {new Date(video.completed_at || video.created_at).toLocaleDateString()}
                     </p>
+                    {video.metadata?.youtubeUrl && (
+                      <a
+                        href={video.metadata.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-red-500 hover:text-red-600 underline mt-1 inline-block"
+                      >
+                        View on YouTube →
+                      </a>
+                    )}
                   </div>
-                  <a
-                    href={video.s3_url}
-                    download
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
-                  >
-                    Download
-                  </a>
+                  <div className="flex gap-2">
+                    <a
+                      href={video.s3_url}
+                      download
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
+                    >
+                      Download
+                    </a>
+                    {!video.metadata?.youtubeUrl && (
+                      <button
+                        onClick={() => uploadToYouTube(video.id)}
+                        disabled={uploadingVideoId === video.id}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {uploadingVideoId === video.id ? (
+                          <>
+                            <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            Uploading...
+                          </>
+                        ) : (
+                          "Upload to YouTube"
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
