@@ -73,14 +73,15 @@ export interface Video {
 export async function createVideo(
   userId: string,
   gameId: string,
-  compositionType: string = 'walkthrough'
+  compositionType: string = 'walkthrough',
+  renderMetadata?: { renderId: string; bucketName: string }
 ): Promise<Video> {
   const pool = getPool();
   const result = await pool.query(
-    `INSERT INTO videos (user_id, game_id, composition_type, status)
-     VALUES ($1, $2, $3, 'pending')
+    `INSERT INTO videos (user_id, game_id, composition_type, status, metadata)
+     VALUES ($1, $2, $3, 'pending', $4)
      RETURNING *`,
-    [userId, gameId, compositionType]
+    [userId, gameId, compositionType, renderMetadata ? JSON.stringify(renderMetadata) : null]
   );
   return result.rows[0];
 }

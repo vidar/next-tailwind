@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { Chessground } from "chessground";
 import { Chess } from "chess.js";
 import type { Api } from "chessground/api";
+import { useChessRendering } from "@/helpers/use-chess-rendering";
 
 interface ChessAnalysis {
   id: string;
@@ -35,10 +36,22 @@ export default function AnalyzedGameDetailPage() {
   const [isGameInfoOpen, setIsGameInfoOpen] = useState(false);
   const [isPgnOpen, setIsPgnOpen] = useState(false);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  const [existingVideos, setExistingVideos] = useState<any[]>([]);
+
+  // Chess rendering hook
+  const { renderMedia, state: renderState, undo } = useChessRendering(id);
 
   useEffect(() => {
     fetchAnalysis();
+    fetchVideos();
   }, [id]);
+
+  useEffect(() => {
+    // Refresh videos when render completes
+    if (renderState.status === "done") {
+      fetchVideos();
+    }
+  }, [renderState.status]);
 
   useEffect(() => {
     if (analysis && boardRef.current && !cgRef.current) {
@@ -89,6 +102,21 @@ export default function AnalyzedGameDetailPage() {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVideos = async () => {
+    try {
+      const response = await fetch(`/api/videos/${id}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch videos");
+      }
+
+      const data = await response.json();
+      setExistingVideos(data.videos.filter((v: any) => v.status === "completed"));
+    } catch (err) {
+      console.error("Failed to fetch videos:", err);
     }
   };
 
@@ -222,6 +250,15 @@ export default function AnalyzedGameDetailPage() {
             >
               Preview Video
             </Link>
+            {renderState.status === "init" || renderState.status === "error" ? (
+              <button
+                onClick={renderMedia}
+                disabled={renderState.status === "invoking"}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {renderState.status === "invoking" ? "Starting..." : "Render Video"}
+              </button>
+            ) : null}
             <Link
               href="/analyzed_games"
               className="text-blue-500 hover:text-blue-600 underline"
@@ -230,6 +267,95 @@ export default function AnalyzedGameDetailPage() {
             </Link>
           </div>
         </div>
+
+        {/* Render Progress */}
+        {(renderState.status === "invoking" || renderState.status === "rendering" || renderState.status === "done") && (
+          <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">
+              {renderState.status === "done" ? "Render Complete" : "Rendering Video..."}
+            </h2>
+            {renderState.status === "rendering" && (
+              <div className="mb-4">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="bg-green-500 h-4 transition-all duration-300"
+                    style={{ width: `${renderState.progress * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Progress: {Math.round(renderState.progress * 100)}%
+                </p>
+              </div>
+            )}
+            {renderState.status === "done" && (
+              <div>
+                <p className="text-green-600 dark:text-green-400 mb-4">
+                  Video rendered successfully! ({(renderState.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+                <div className="flex gap-4">
+                  <a
+                    href={renderState.url}
+                    download
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
+                  >
+                    Download Video
+                  </a>
+                  <button
+                    onClick={undo}
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-medium transition-colors"
+                  >
+                    Render Another
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Render Error */}
+        {renderState.status === "error" && (
+          <div className="mb-6 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-2">Render Error</h2>
+            <p>{renderState.error.message}</p>
+            <button
+              onClick={undo}
+              className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Existing Videos */}
+        {existingVideos.length > 0 && renderState.status !== "done" && (
+          <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">Rendered Videos</h2>
+            <div className="space-y-3">
+              {existingVideos.map((video) => (
+                <div
+                  key={video.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {video.composition_type.charAt(0).toUpperCase() + video.composition_type.slice(1)} Video
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Rendered {new Date(video.completed_at || video.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <a
+                    href={video.s3_url}
+                    download
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
+                  >
+                    Download
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Chess Board */}
