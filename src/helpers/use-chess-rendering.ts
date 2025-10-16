@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+// import { useUser } from "@clerk/nextjs";
 
 export type ChessRenderState =
   | {
@@ -32,21 +32,24 @@ const wait = async (milliSeconds: number) => {
   });
 };
 
+// Hardcoded user ID for development
+const HARDCODED_USER_ID = "user_2a92fk0OwmLXTbHYgmo6yoE1f0q";
+
 export const useChessRendering = (gameId: string) => {
-  const { user } = useUser();
+  // const { user } = useUser();
   const [state, setState] = useState<ChessRenderState>({
     status: "init",
   });
 
   const renderMedia = useCallback(async () => {
-    if (!user) {
-      setState({
-        status: "error",
-        error: new Error("User not authenticated"),
-        videoId: null,
-      });
-      return;
-    }
+    // if (!user) {
+    //   setState({
+    //     status: "error",
+    //     error: new Error("User not authenticated"),
+    //     videoId: null,
+    //   });
+    //   return;
+    // }
 
     setState({
       status: "invoking",
@@ -59,7 +62,7 @@ export const useChessRendering = (gameId: string) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           gameId,
-          userId: user.id,
+          userId: HARDCODED_USER_ID,
           compositionType: "walkthrough",
         }),
       });
@@ -140,7 +143,7 @@ export const useChessRendering = (gameId: string) => {
         videoId: null,
       });
     }
-  }, [gameId, user]);
+  }, [gameId]);
 
   const undo = useCallback(() => {
     setState({ status: "init" });
