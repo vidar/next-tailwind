@@ -215,12 +215,20 @@ export default function AnalyzedGameDetailPage() {
               </a>
             )}
           </div>
-          <Link
-            href="/analyzed_games"
-            className="text-blue-500 hover:text-blue-600 underline"
-          >
-            Back to Analyzed Games
-          </Link>
+          <div className="flex gap-4 items-center">
+            <Link
+              href={`/preview/${id}`}
+              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-medium transition-colors"
+            >
+              Preview Video
+            </Link>
+            <Link
+              href="/analyzed_games"
+              className="text-blue-500 hover:text-blue-600 underline"
+            >
+              Back to Analyzed Games
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

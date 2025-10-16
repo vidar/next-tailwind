@@ -39,3 +39,4 @@ out/
 build
 # clerk configuration (can include secrets)
 /.clerk/
+/out
