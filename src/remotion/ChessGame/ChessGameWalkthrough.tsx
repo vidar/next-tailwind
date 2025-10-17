@@ -5,6 +5,7 @@ import {
   useVideoConfig,
   Img,
   staticFile,
+  Sequence,
 } from "remotion";
 import { ChessGameProps } from "../../../types/constants";
 import { Chess } from "chess.js";
@@ -15,12 +16,16 @@ import "chessground/assets/chessground.base.css";
 import "chessground/assets/chessground.brown.css";
 import "chessground/assets/chessground.cburnett.css";
 import "./chessground-override.css";
+import { LogoIntro } from "./LogoIntro";
+import { LogoOutro } from "./LogoOutro";
 
-export const ChessGameWalkthrough = ({
+// Main game content component
+const GameContent = ({
   pgn,
   analysisResults,
   gameInfo,
-}: z.infer<typeof ChessGameProps>) => {
+  introFrames,
+}: z.infer<typeof ChessGameProps> & { introFrames: number }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -39,6 +44,7 @@ export const ChessGameWalkthrough = ({
   }, [pgn]);
 
   // Calculate current move index (1 second per move)
+  // Adjust for intro by using frame within this sequence
   const currentMoveIndex = Math.min(
     Math.floor(frame / fps),
     moves.length
@@ -277,6 +283,49 @@ export const ChessGameWalkthrough = ({
           </p>
         </div>
       </div>
+    </AbsoluteFill>
+  );
+};
+
+// Main composition with intro/outro
+export const ChessGameWalkthrough = ({
+  pgn,
+  analysisResults,
+  gameInfo,
+}: z.infer<typeof ChessGameProps>) => {
+  const { fps } = useVideoConfig();
+
+  // Calculate durations
+  const INTRO_DURATION = fps * 3; // 3 seconds intro
+  const OUTRO_DURATION = fps * 3; // 3 seconds outro
+
+  // Calculate game duration
+  const game = new Chess();
+  game.loadPgn(pgn);
+  const moves = game.history();
+  const GAME_DURATION = moves.length * fps; // 1 second per move
+
+  return (
+    <AbsoluteFill>
+      {/* Intro */}
+      <Sequence durationInFrames={INTRO_DURATION}>
+        <LogoIntro />
+      </Sequence>
+
+      {/* Main Game Content */}
+      <Sequence from={INTRO_DURATION} durationInFrames={GAME_DURATION}>
+        <GameContent
+          pgn={pgn}
+          analysisResults={analysisResults}
+          gameInfo={gameInfo}
+          introFrames={INTRO_DURATION}
+        />
+      </Sequence>
+
+      {/* Outro */}
+      <Sequence from={INTRO_DURATION + GAME_DURATION} durationInFrames={OUTRO_DURATION}>
+        <LogoOutro />
+      </Sequence>
     </AbsoluteFill>
   );
 };

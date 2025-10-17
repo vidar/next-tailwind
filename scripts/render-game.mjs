@@ -7,6 +7,7 @@ import pg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
+import cliProgress from "cli-progress";
 
 const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
@@ -66,9 +67,12 @@ function calculateDuration(pgn, fps = 30) {
     const game = new Chess();
     game.loadPgn(pgn);
     const moves = game.history();
-    return moves.length * fps; // 1 second per move
+    const INTRO_DURATION = 3; // 3 seconds intro
+    const OUTRO_DURATION = 3; // 3 seconds outro
+    const gameDuration = moves.length; // 1 second per move
+    return (INTRO_DURATION + gameDuration + OUTRO_DURATION) * fps;
   } catch {
-    return 60 * fps; // Default to 60 seconds
+    return 66 * fps; // Default to 66 seconds (60 + 3 intro + 3 outro)
   }
 }
 
@@ -118,8 +122,22 @@ async function main() {
       `chess-${gameId}-${Date.now()}.mp4`
     );
 
+    // Create progress bar
+    console.log("Starting render...\n");
+    const progressBar = new cliProgress.SingleBar({
+      format: 'Rendering |{bar}| {percentage}% | Rendered: {renderedFrames} | Encoded: {encodedFrames} | ETA: {eta}s',
+      barCompleteChar: '\u2588',
+      barIncompleteChar: '\u2591',
+      hideCursor: true
+    }, cliProgress.Presets.shades_classic);
+
+    // Start progress bar
+    progressBar.start(100, 0, {
+      renderedFrames: 0,
+      encodedFrames: 0
+    });
+
     // Render the video
-    console.log("Starting render...");
     await renderMedia({
       composition,
       serveUrl: bundleLocation,
@@ -127,11 +145,15 @@ async function main() {
       outputLocation: outputPath,
       inputProps,
       onProgress: ({ progress, renderedFrames, encodedFrames }) => {
-        console.log(
-          `Progress: ${(progress * 100).toFixed(1)}% | Rendered: ${renderedFrames} | Encoded: ${encodedFrames}`
-        );
+        progressBar.update(Math.round(progress * 100), {
+          renderedFrames,
+          encodedFrames
+        });
       },
     });
+
+    // Stop progress bar
+    progressBar.stop();
 
     console.log(`\n✅ Video rendered successfully!`);
     console.log(`Output: ${outputPath}`);

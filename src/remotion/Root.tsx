@@ -25,9 +25,12 @@ const calculateChessDuration = (pgn: string, fps: number): number => {
     const game = new Chess();
     game.loadPgn(pgn);
     const moves = game.history();
-    return moves.length * fps * CHESS_SECONDS_PER_MOVE;
+    const INTRO_DURATION = 3; // 3 seconds intro
+    const OUTRO_DURATION = 3; // 3 seconds outro
+    const gameDuration = moves.length * CHESS_SECONDS_PER_MOVE;
+    return (INTRO_DURATION + gameDuration + OUTRO_DURATION) * fps;
   } catch {
-    return 60 * fps; // Default to 60 seconds if parsing fails
+    return 66 * fps; // Default to 66 seconds if parsing fails (60 + 3 intro + 3 outro)
   }
 };
 
