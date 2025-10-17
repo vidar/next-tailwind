@@ -1,13 +1,14 @@
 # TODO
 - [ ] stockfish quality control
 - [ ] setup clerk
-- [ ] setup youtube
+- [x] setup youtube
 - [ ] more video templates
-- [ ] intro/outro on videos
+- [x] intro/outro on videos
 - [ ] tournaments
 - [ ] player overview
 - [ ] youtube 
-    - [ ] setup
+    - [x] setup
+    - [ ] make dedicated account
     - [ ] description
     - [ ] chapters
     - [ ] playlists

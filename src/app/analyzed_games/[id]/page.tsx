@@ -26,6 +26,7 @@ export default function AnalyzedGameDetailPage() {
   const id = params.id as string;
   const boardRef = useRef<HTMLDivElement>(null);
   const cgRef = useRef<Api | null>(null);
+  const moveRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   const [analysis, setAnalysis] = useState<ChessAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,12 +41,25 @@ export default function AnalyzedGameDetailPage() {
   const [uploadingVideoId, setUploadingVideoId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Annotation state
+  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [showAnnotationModal, setShowAnnotationModal] = useState(false);
+  const [annotationMoveIndex, setAnnotationMoveIndex] = useState<number | null>(null);
+  const [annotationText, setAnnotationText] = useState("");
+  const [annotationSaving, setAnnotationSaving] = useState(false);
+  const annotationBoardRef = useRef<HTMLDivElement>(null);
+  const annotationCgRef = useRef<Api | null>(null);
+
+  // Composition type selection
+  const [compositionType, setCompositionType] = useState<"walkthrough" | "annotated">("walkthrough");
+
   // Chess rendering hook
   const { renderMedia, state: renderState, undo } = useChessRendering(id);
 
   useEffect(() => {
     fetchAnalysis();
     fetchVideos();
+    fetchAnnotations();
   }, [id]);
 
   useEffect(() => {
@@ -84,6 +98,14 @@ export default function AnalyzedGameDetailPage() {
         game.move(moves[i]);
       }
       updateBoard(game);
+
+      // Scroll the current move into view
+      if (moveIndex > 0 && moveRefs.current[moveIndex]) {
+        moveRefs.current[moveIndex]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
     }
   }, [moveIndex]);
 
@@ -153,6 +175,126 @@ export default function AnalyzedGameDetailPage() {
     } finally {
       setUploadingVideoId(null);
     }
+  };
+
+  const fetchAnnotations = async () => {
+    try {
+      const response = await fetch(`/api/annotations/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch annotations");
+      const data = await response.json();
+      setAnnotations(data.annotations);
+    } catch (err) {
+      console.error("Failed to fetch annotations:", err);
+    }
+  };
+
+  const openAnnotationModal = (moveIdx: number) => {
+    const existing = annotations.find((a) => a.move_index === moveIdx);
+    setAnnotationMoveIndex(moveIdx);
+    setAnnotationText(existing?.annotation_text || "");
+    setShowAnnotationModal(true);
+  };
+
+  const closeAnnotationModal = () => {
+    setShowAnnotationModal(false);
+    setAnnotationMoveIndex(null);
+    setAnnotationText("");
+    // Clean up annotation board
+    if (annotationCgRef.current) {
+      annotationCgRef.current.destroy();
+      annotationCgRef.current = null;
+    }
+  };
+
+  // Initialize annotation board when modal opens
+  useEffect(() => {
+    if (showAnnotationModal && annotationMoveIndex !== null && annotationBoardRef.current && analysis) {
+      // Calculate FEN for the position after the move
+      const game = new Chess();
+      game.loadPgn(analysis.pgn);
+      const history = game.history();
+
+      // Reset and play moves up to annotationMoveIndex
+      game.reset();
+      for (let i = 0; i < annotationMoveIndex; i++) {
+        if (history[i]) {
+          game.move(history[i]);
+        }
+      }
+
+      const fen = game.fen();
+
+      // Initialize or update the annotation board
+      if (!annotationCgRef.current) {
+        annotationCgRef.current = Chessground(annotationBoardRef.current, {
+          viewOnly: true,
+          coordinates: false,
+          fen,
+          orientation: "white",
+          drawable: { enabled: false },
+          highlight: { lastMove: false },
+          animation: { enabled: false },
+        });
+      } else {
+        annotationCgRef.current.set({
+          fen,
+          turnColor: game.turn() === "w" ? "white" : "black",
+        });
+      }
+    }
+  }, [showAnnotationModal, annotationMoveIndex, analysis]);
+
+  const saveAnnotation = async () => {
+    if (annotationMoveIndex === null || !annotationText.trim()) return;
+
+    setAnnotationSaving(true);
+    try {
+      const response = await fetch("/api/annotations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId: id,
+          moveIndex: annotationMoveIndex,
+          annotationText: annotationText.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to save annotation");
+      }
+
+      await fetchAnnotations();
+      closeAnnotationModal();
+    } catch (err) {
+      console.error("Failed to save annotation:", err);
+      alert(err instanceof Error ? err.message : "Failed to save annotation");
+    } finally {
+      setAnnotationSaving(false);
+    }
+  };
+
+  const deleteAnnotationHandler = async (annotationId: string) => {
+    if (!confirm("Delete this annotation?")) return;
+
+    try {
+      const response = await fetch("/api/annotations/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ annotationId }),
+      });
+
+      if (!response.ok) throw new Error("Failed to delete annotation");
+
+      await fetchAnnotations();
+    } catch (err) {
+      console.error("Failed to delete annotation:", err);
+      alert("Failed to delete annotation");
+    }
+  };
+
+  const hasAnnotation = (moveIdx: number) => {
+    return annotations.some((a) => a.move_index === moveIdx);
   };
 
   const updateBoard = (game: Chess) => {
@@ -286,13 +428,27 @@ export default function AnalyzedGameDetailPage() {
               Preview Video
             </Link>
             {renderState.status === "init" || renderState.status === "error" ? (
-              <button
-                onClick={renderMedia}
-                disabled={renderState.status === "invoking"}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {renderState.status === "invoking" ? "Starting..." : "Render Video"}
-              </button>
+              <>
+                <select
+                  value={compositionType}
+                  onChange={(e) => setCompositionType(e.target.value as "walkthrough" | "annotated")}
+                  disabled={compositionType === "annotated" && annotations.length === 0}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg font-medium transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
+                  title={compositionType === "annotated" && annotations.length === 0 ? "Add annotations first" : ""}
+                >
+                  <option value="walkthrough">Walkthrough</option>
+                  <option value="annotated" disabled={annotations.length === 0}>
+                    Annotated {annotations.length === 0 ? "(no annotations)" : `(${annotations.length})`}
+                  </option>
+                </select>
+                <button
+                  onClick={() => renderMedia(compositionType)}
+                  disabled={renderState.status === "invoking" || (compositionType === "annotated" && annotations.length === 0)}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {renderState.status === "invoking" ? "Starting..." : "Render Video"}
+                </button>
+              </>
             ) : null}
             <Link
               href="/analyzed_games"
@@ -501,26 +657,54 @@ export default function AnalyzedGameDetailPage() {
                 </button>
               </div>
 
-              {/* Move List */}
+              {/* Move List with Annotations */}
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Moves</h3>
-                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 max-h-48 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-2 text-sm font-mono">
-                    {moves.map((move, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setMoveIndex(idx + 1)}
-                        className={`text-left px-2 py-1 rounded ${
-                          moveIndex === idx + 1
-                            ? "bg-blue-500 text-white"
-                            : "hover:bg-gray-200 dark:hover:bg-gray-600"
-                        }`}
-                      >
-                        {Math.floor(idx / 2) + 1}
-                        {idx % 2 === 0 ? ". " : "... "}
-                        {move}
-                      </button>
-                    ))}
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold">Moves</h3>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {annotations.length} annotation{annotations.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 max-h-96 overflow-y-auto">
+                  <div className="space-y-1">
+                    {moves.map((move, idx) => {
+                      const moveNum = idx + 1;
+                      const hasNote = hasAnnotation(moveNum);
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-1"
+                          ref={(el) => {
+                            moveRefs.current[moveNum] = el;
+                          }}
+                        >
+                          <button
+                            onClick={() => setMoveIndex(moveNum)}
+                            className={`flex-1 text-left px-2 py-1 rounded text-sm font-mono ${
+                              moveIndex === moveNum
+                                ? "bg-blue-500 text-white"
+                                : "hover:bg-gray-200 dark:hover:bg-gray-600"
+                            }`}
+                          >
+                            {Math.floor(idx / 2) + 1}
+                            {idx % 2 === 0 ? ". " : "... "}
+                            {move}
+                            {hasNote && <span className="ml-1">💬</span>}
+                          </button>
+                          <button
+                            onClick={() => openAnnotationModal(moveNum)}
+                            className={`px-2 py-1 rounded text-xs ${
+                              hasNote
+                                ? "bg-purple-500 text-white hover:bg-purple-600"
+                                : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
+                            }`}
+                            title={hasNote ? "Edit annotation" : "Add annotation"}
+                          >
+                            {hasNote ? "✏️" : "+"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -603,6 +787,111 @@ export default function AnalyzedGameDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Annotation Modal */}
+        {showAnnotationModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">
+                  {hasAnnotation(annotationMoveIndex!) ? "Edit" : "Add"} Annotation
+                </h2>
+                <button
+                  onClick={closeAnnotationModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="flex gap-6 mb-4">
+                {/* Position Preview */}
+                <div className="flex-shrink-0">
+                  <div className="text-sm font-medium mb-2 text-center">
+                    Position after move {annotationMoveIndex}:
+                    {annotationMoveIndex && moves[annotationMoveIndex - 1] && (
+                      <span className="ml-2 font-mono text-blue-500">
+                        {Math.floor((annotationMoveIndex - 1) / 2) + 1}
+                        {annotationMoveIndex % 2 === 1 ? ". " : "... "}
+                        {moves[annotationMoveIndex - 1]}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      width: "300px",
+                      height: "300px",
+                      position: "relative",
+                    }}
+                    className="rounded-lg overflow-hidden shadow-md"
+                  >
+                    <div
+                      ref={annotationBoardRef}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Annotation Text */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-2">
+                    Your annotation:
+                  </label>
+                  <textarea
+                    value={annotationText}
+                    onChange={(e) => setAnnotationText(e.target.value)}
+                    placeholder="Enter your commentary or analysis for this position... (max 500 characters)"
+                    className="w-full h-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 resize-none"
+                    maxLength={500}
+                  />
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 text-right">
+                    {annotationText.length} / 500 characters
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  {hasAnnotation(annotationMoveIndex!) && (
+                    <button
+                      onClick={() => {
+                        const ann = annotations.find((a) => a.move_index === annotationMoveIndex);
+                        if (ann) {
+                          deleteAnnotationHandler(ann.id);
+                          closeAnnotationModal();
+                        }
+                      }}
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={closeAnnotationModal}
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveAnnotation}
+                    disabled={annotationSaving || !annotationText.trim()}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {annotationSaving ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

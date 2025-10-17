@@ -41,7 +41,7 @@ export const useChessRendering = (gameId: string) => {
     status: "init",
   });
 
-  const renderMedia = useCallback(async () => {
+  const renderMedia = useCallback(async (compositionType: "walkthrough" | "annotated" = "walkthrough") => {
     // if (!user) {
     //   setState({
     //     status: "error",
@@ -63,7 +63,7 @@ export const useChessRendering = (gameId: string) => {
         body: JSON.stringify({
           gameId,
           userId: HARDCODED_USER_ID,
-          compositionType: "walkthrough",
+          compositionType,
         }),
       });
 
