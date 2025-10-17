@@ -66,42 +66,29 @@ const GameContent = ({
     return game.fen();
   }, [currentMoveIndex, moves]);
 
-  // Initialize chessground once with proper timing
+  // Initialize chessground and update position
   useEffect(() => {
-    if (boardRef.current && !cgRef.current) {
-      // Small delay to ensure DOM is fully ready
-      const timer = setTimeout(() => {
-        if (boardRef.current) {
-          cgRef.current = Chessground(boardRef.current, {
-            viewOnly: true,
-            coordinates: true,
-            fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-            orientation: "white",
-            drawable: {
-              enabled: false,
-            },
-            highlight: {
-              lastMove: false,
-            },
-            animation: {
-              enabled: false, // Disable animations for consistent rendering
-            },
-          });
+    if (!boardRef.current) return;
 
-          // Force a redraw
-          if (cgRef.current) {
-            cgRef.current.redrawAll();
-          }
-        }
-      }, 10);
-
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  // Update board position when FEN changes
-  useEffect(() => {
-    if (cgRef.current) {
+    // Initialize Chessground if not already initialized
+    if (!cgRef.current) {
+      cgRef.current = Chessground(boardRef.current, {
+        viewOnly: true,
+        coordinates: true,
+        fen: currentFen, // Start with the current FEN, not the starting position
+        orientation: "white",
+        drawable: {
+          enabled: false,
+        },
+        highlight: {
+          lastMove: false,
+        },
+        animation: {
+          enabled: false, // Disable animations for consistent rendering
+        },
+      });
+    } else {
+      // Update existing board
       const game = new Chess(currentFen);
       cgRef.current.set({
         fen: currentFen,
@@ -114,10 +101,11 @@ const GameContent = ({
           enabled: false,
         },
       });
-      // Force redraw after position update
-      cgRef.current.redrawAll();
     }
-  }, [currentFen]);
+
+    // Always force a redraw to ensure consistency
+    cgRef.current?.redrawAll();
+  }, [currentFen]); // Run whenever currentFen changes (which depends on frame)
 
   const getCurrentEvaluation = (): number => {
     if (!analysisResults?.moves || currentMoveIndex === 0) {
