@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { getVideoById, updateVideoMetadata } from "@/lib/db";
+import { Readable } from "stream";
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,7 +64,11 @@ export async function POST(request: NextRequest) {
       throw new Error("Failed to download video from S3");
     }
 
+    // Convert the response to a buffer
     const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+
+    // Create a readable stream from the buffer
+    const videoStream = Readable.from(videoBuffer);
 
     // Get game info from metadata
     const gameInfo = video.metadata?.gameInfo || {};
@@ -93,7 +98,7 @@ Generated with chessmoments.com`;
         },
       },
       media: {
-        body: videoBuffer,
+        body: videoStream,
       },
     });
 

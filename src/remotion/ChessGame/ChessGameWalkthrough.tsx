@@ -6,6 +6,8 @@ import {
   Img,
   staticFile,
   Sequence,
+  spring,
+  interpolate,
 } from "remotion";
 import { ChessGameProps } from "../../../types/constants";
 import { Chess } from "chess.js";
@@ -130,6 +132,21 @@ const GameContent = ({
     return ((1000 - clamped) / 2000) * 100;
   };
 
+  // Animation for game info fade-in
+  const infoSpring = spring({
+    frame,
+    fps,
+    config: {
+      damping: 100,
+      stiffness: 200,
+      mass: 0.5,
+    },
+  });
+
+  const infoOpacity = interpolate(infoSpring, [0, 1], [0, 1]);
+  const infoTranslateY = interpolate(infoSpring, [0, 1], [30, 0]);
+  const infoScale = interpolate(infoSpring, [0, 1], [0.95, 1]);
+
   const boardSize = 900; // Optimized for portrait video
 
   return (
@@ -146,12 +163,14 @@ const GameContent = ({
           padding: '60px 40px',
         }}
       >
-        {/* Game Info Header */}
+        {/* Game Info Header - Animated */}
         <div style={{
           textAlign: 'center',
           marginBottom: '40px',
           width: '100%',
           maxWidth: '1000px',
+          opacity: infoOpacity,
+          transform: `translateY(${infoTranslateY}px) scale(${infoScale})`,
         }}>
           <h1 style={{
             fontSize: '56px',
@@ -180,6 +199,14 @@ const GameContent = ({
                 {moves[currentMoveIndex - 1]}
               </span>
             )}
+          </p>
+          {/* Result and Date info - below player names */}
+          <p style={{
+            fontSize: '28px',
+            color: '#9ca3af',
+            marginTop: '12px',
+          }}>
+            {gameInfo.result} • {gameInfo.date}
           </p>
         </div>
 
@@ -262,21 +289,16 @@ const GameContent = ({
           </div>
         </div>
 
-        {/* Footer with branding */}
+        {/* Footer with branding - Animated */}
         <div style={{
           marginTop: '40px',
           textAlign: 'center',
+          opacity: infoOpacity,
+          transform: `translateY(${infoTranslateY}px)`,
         }}>
-          <p style={{
-            color: '#9ca3af',
-            fontSize: '24px',
-          }}>
-            {gameInfo.result} • {gameInfo.date}
-          </p>
           <p style={{
             color: '#60a5fa',
             fontWeight: '600',
-            marginTop: '8px',
             fontSize: '28px',
           }}>
             chessmoments.com

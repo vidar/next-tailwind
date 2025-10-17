@@ -21,23 +21,34 @@ This document explains how to set up YouTube OAuth credentials for uploading vid
 2. Search for "YouTube Data API v3"
 3. Click on it and click **Enable**
 
-### 3. Create OAuth 2.0 Credentials
+### 3. Configure OAuth Consent Screen
+
+1. Go to **APIs & Services > OAuth consent screen**
+2. Choose **External** user type (if you don't have a Google Workspace)
+3. Fill in the required fields:
+   - **App name**: "Chess Moments" (or your app name)
+   - **User support email**: Your email
+   - **Developer contact email**: Your email
+4. Click **Save and Continue**
+5. On the **Scopes** screen, click **Add or Remove Scopes**
+6. Filter for "YouTube" and add: `https://www.googleapis.com/auth/youtube.upload`
+7. Click **Update** then **Save and Continue**
+8. On the **Test users** screen, click **Add Users**
+9. **IMPORTANT**: Add your Google account email (vidar.masson@gmail.com) as a test user
+10. Click **Add** then **Save and Continue**
+11. Review and go back to dashboard
+
+### 4. Create OAuth 2.0 Credentials
 
 1. Go to **APIs & Services > Credentials**
 2. Click **Create Credentials > OAuth client ID**
-3. If prompted, configure the OAuth consent screen:
-   - Choose **External** user type
-   - Fill in the required fields (App name, User support email, Developer contact email)
-   - Add the scope: `https://www.googleapis.com/auth/youtube.upload`
-   - Save and continue
-4. Back to creating OAuth client ID:
-   - Application type: **Web application**
-   - Name: "Chess Moments YouTube Uploader"
-   - Authorized redirect URIs: Add `http://localhost:3000/api/youtube/callback` (or your production URL)
-5. Click **Create**
-6. Copy the **Client ID** and **Client Secret**
+3. Application type: **Web application**
+4. Name: "Chess Moments YouTube Uploader"
+5. Authorized redirect URIs: Add `http://localhost:3000/api/youtube/callback` (or your production URL)
+6. Click **Create**
+7. Copy the **Client ID** and **Client Secret**
 
-### 4. Get Refresh Token
+### 5. Get Refresh Token
 
 You need to authenticate once to get a refresh token. Use this Node.js script:
 
@@ -89,7 +100,7 @@ node get-refresh-token.js
 5. Paste it into the terminal
 6. Save the refresh token that's printed
 
-### 5. Add Environment Variables
+### 6. Add Environment Variables
 
 Add these to your `.env` file:
 
