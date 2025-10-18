@@ -80,6 +80,12 @@ export default function RootLayout({
                 >
                   Analyzed Games
                 </Link>
+                <Link
+                  href="/tournaments"
+                  className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors"
+                >
+                  Tournaments
+                </Link>
               </nav>
 
               {/* Auth Buttons - Disabled */}
