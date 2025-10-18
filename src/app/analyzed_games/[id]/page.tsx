@@ -47,6 +47,8 @@ export default function AnalyzedGameDetailPage() {
   const [annotationMoveIndex, setAnnotationMoveIndex] = useState<number | null>(null);
   const [annotationText, setAnnotationText] = useState("");
   const [annotationSaving, setAnnotationSaving] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [generatingMoves, setGeneratingMoves] = useState<Set<number>>(new Set());
   const annotationBoardRef = useRef<HTMLDivElement>(null);
   const annotationCgRef = useRef<Api | null>(null);
 
@@ -293,6 +295,133 @@ export default function AnalyzedGameDetailPage() {
     } catch (err) {
       console.error("Failed to delete annotation:", err);
       alert("Failed to delete annotation");
+    }
+  };
+
+  // Generate AI annotation for modal use case
+  const generateAIAnnotation = async () => {
+    if (annotationMoveIndex === null || !analysis) return;
+
+    setGeneratingAI(true);
+    try {
+      // Calculate position before the move
+      const game = new Chess();
+      game.loadPgn(analysis.pgn);
+      const history = game.history();
+
+      // Reset and play moves up to just before annotationMoveIndex
+      game.reset();
+      for (let i = 0; i < annotationMoveIndex - 1; i++) {
+        if (history[i]) {
+          game.move(history[i]);
+        }
+      }
+
+      const positionBeforeMove = game.fen();
+      const move = history[annotationMoveIndex - 1];
+
+      // Get evaluations if available
+      const currentEval = analysis.analysis_results?.moves?.[annotationMoveIndex - 1]?.evaluation;
+      const previousEval = analysis.analysis_results?.moves?.[annotationMoveIndex - 2]?.evaluation;
+
+      const response = await fetch("/api/annotations/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position: positionBeforeMove,
+          move,
+          evaluation: currentEval,
+          previousEvaluation: previousEval,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to generate annotation");
+      }
+
+      const data = await response.json();
+      setAnnotationText(data.annotation);
+    } catch (err) {
+      console.error("Failed to generate AI annotation:", err);
+      alert(err instanceof Error ? err.message : "Failed to generate annotation");
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
+  // Generate and save AI annotation directly (quick click from move list)
+  const generateAIAnnotationQuick = async (moveIdx: number) => {
+    if (!analysis || generatingMoves.has(moveIdx)) return;
+
+    // Add to generating set
+    setGeneratingMoves(new Set(generatingMoves).add(moveIdx));
+
+    try {
+      // Calculate position before the move
+      const game = new Chess();
+      game.loadPgn(analysis.pgn);
+      const history = game.history();
+
+      // Reset and play moves up to just before moveIdx
+      game.reset();
+      for (let i = 0; i < moveIdx - 1; i++) {
+        if (history[i]) {
+          game.move(history[i]);
+        }
+      }
+
+      const positionBeforeMove = game.fen();
+      const move = history[moveIdx - 1];
+
+      // Get evaluations if available
+      const currentEval = analysis.analysis_results?.moves?.[moveIdx - 1]?.evaluation;
+      const previousEval = analysis.analysis_results?.moves?.[moveIdx - 2]?.evaluation;
+
+      // Generate annotation
+      const generateResponse = await fetch("/api/annotations/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position: positionBeforeMove,
+          move,
+          evaluation: currentEval,
+          previousEvaluation: previousEval,
+        }),
+      });
+
+      if (!generateResponse.ok) {
+        const error = await generateResponse.json();
+        throw new Error(error.error || "Failed to generate annotation");
+      }
+
+      const generateData = await generateResponse.json();
+
+      // Save annotation
+      const saveResponse = await fetch("/api/annotations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId: id,
+          moveIndex: moveIdx,
+          annotationText: generateData.annotation,
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        const error = await saveResponse.json();
+        throw new Error(error.error || "Failed to save annotation");
+      }
+
+      await fetchAnnotations();
+    } catch (err) {
+      console.error("Failed to generate AI annotation:", err);
+      alert(err instanceof Error ? err.message : "Failed to generate annotation");
+    } finally {
+      // Remove from generating set
+      const newSet = new Set(generatingMoves);
+      newSet.delete(moveIdx);
+      setGeneratingMoves(newSet);
     }
   };
 
@@ -703,15 +832,38 @@ export default function AnalyzedGameDetailPage() {
                             {hasNote && <span className="ml-1">💬</span>}
                           </button>
                           <button
-                            onClick={() => openAnnotationModal(moveNum)}
-                            className={`px-2 py-1 rounded text-xs ${
-                              hasNote
+                            onClick={(e) => {
+                              // Shift+Click for quick AI generation
+                              if (e.shiftKey) {
+                                e.preventDefault();
+                                generateAIAnnotationQuick(moveNum);
+                              } else {
+                                openAnnotationModal(moveNum);
+                              }
+                            }}
+                            disabled={generatingMoves.has(moveNum)}
+                            className={`px-2 py-1 rounded text-xs relative ${
+                              generatingMoves.has(moveNum)
+                                ? "bg-yellow-400 cursor-wait"
+                                : hasNote
                                 ? "bg-purple-500 text-white hover:bg-purple-600"
                                 : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
                             }`}
-                            title={hasNote ? "Edit annotation" : "Add annotation"}
+                            title={
+                              generatingMoves.has(moveNum)
+                                ? "Generating annotation..."
+                                : hasNote
+                                ? "Edit annotation (Shift+Click for AI)"
+                                : "Add annotation (Shift+Click for AI)"
+                            }
                           >
-                            {hasNote ? "✏️" : "+"}
+                            {generatingMoves.has(moveNum) ? (
+                              <span className="inline-block w-3 h-3 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></span>
+                            ) : hasNote ? (
+                              "✏️"
+                            ) : (
+                              "+"
+                            )}
                           </button>
                         </div>
                       );
@@ -851,9 +1003,28 @@ export default function AnalyzedGameDetailPage() {
 
                 {/* Annotation Text */}
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-2">
-                    Your annotation:
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      Your annotation:
+                    </label>
+                    <button
+                      onClick={generateAIAnnotation}
+                      disabled={generatingAI}
+                      className="px-3 py-1 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-xs font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      {generatingAI ? (
+                        <>
+                          <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <span>✨</span>
+                          Generate with AI
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     value={annotationText}
                     onChange={(e) => setAnnotationText(e.target.value)}
