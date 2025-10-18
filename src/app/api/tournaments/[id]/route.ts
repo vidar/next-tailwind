@@ -60,36 +60,37 @@ export async function GET(
 
 /**
  * Helper function to build crosstable data
+ * Returns { result: string, gameId: string | null } for each matchup
  */
 function buildCrosstable(players: any[], games: any[]) {
-  const crosstable: { [key: string]: { [key: string]: string } } = {};
+  const crosstable: { [key: string]: { [key: string]: { result: string; gameId: string | null } } } = {};
 
   // Initialize crosstable
   for (const player of players) {
     crosstable[player.fide_id] = {};
     for (const opponent of players) {
       if (player.fide_id !== opponent.fide_id) {
-        crosstable[player.fide_id][opponent.fide_id] = '-';
+        crosstable[player.fide_id][opponent.fide_id] = { result: '-', gameId: null };
       }
     }
   }
 
-  // Fill in results
+  // Fill in results and game IDs
   for (const game of games) {
-    const { white_fide_id, black_fide_id, result } = game;
+    const { white_fide_id, black_fide_id, result, game_id } = game;
 
     if (result === '1-0') {
-      crosstable[white_fide_id][black_fide_id] = '1';
-      crosstable[black_fide_id][white_fide_id] = '0';
+      crosstable[white_fide_id][black_fide_id] = { result: '1', gameId: game_id };
+      crosstable[black_fide_id][white_fide_id] = { result: '0', gameId: game_id };
     } else if (result === '0-1') {
-      crosstable[white_fide_id][black_fide_id] = '0';
-      crosstable[black_fide_id][white_fide_id] = '1';
+      crosstable[white_fide_id][black_fide_id] = { result: '0', gameId: game_id };
+      crosstable[black_fide_id][white_fide_id] = { result: '1', gameId: game_id };
     } else if (result === '1/2-1/2') {
-      crosstable[white_fide_id][black_fide_id] = '½';
-      crosstable[black_fide_id][white_fide_id] = '½';
+      crosstable[white_fide_id][black_fide_id] = { result: '½', gameId: game_id };
+      crosstable[black_fide_id][white_fide_id] = { result: '½', gameId: game_id };
     } else {
-      crosstable[white_fide_id][black_fide_id] = '*';
-      crosstable[black_fide_id][white_fide_id] = '*';
+      crosstable[white_fide_id][black_fide_id] = { result: '*', gameId: game_id };
+      crosstable[black_fide_id][white_fide_id] = { result: '*', gameId: game_id };
     }
   }
 

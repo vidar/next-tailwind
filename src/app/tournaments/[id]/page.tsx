@@ -48,6 +48,11 @@ interface Game {
   round_id: string;
 }
 
+interface CrosstableCell {
+  result: string;
+  gameId: string | null;
+}
+
 type ViewMode = 'standings' | 'crosstable' | 'games';
 
 export default function TournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,7 +61,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [games, setGames] = useState<Game[]>([]);
-  const [crosstable, setCrosstable] = useState<{ [key: string]: { [key: string]: string } }>({});
+  const [crosstable, setCrosstable] = useState<{ [key: string]: { [key: string]: CrosstableCell } }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('standings');

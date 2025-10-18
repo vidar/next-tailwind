@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface Player {
   fide_id: string;
   full_name: string;
@@ -6,9 +8,14 @@ interface Player {
   final_score: number | null;
 }
 
+interface CrosstableCell {
+  result: string;
+  gameId: string | null;
+}
+
 interface CrosstableProps {
   players: Player[];
-  crosstable: { [key: string]: { [key: string]: string } };
+  crosstable: { [key: string]: { [key: string]: CrosstableCell } };
 }
 
 export default function Crosstable({ players, crosstable }: CrosstableProps) {
@@ -32,27 +39,42 @@ export default function Crosstable({ players, crosstable }: CrosstableProps) {
     return `${lastName}, ${initials}`;
   };
 
-  // Get result display with color coding
-  const getResultCell = (result: string) => {
+  // Get result display with color coding and optional link
+  const getResultCell = (cell: CrosstableCell) => {
+    const { result, gameId } = cell;
     let bgColor = 'bg-gray-100 dark:bg-gray-700';
     let textColor = 'text-gray-600 dark:text-gray-400';
+    let hoverColor = '';
 
     if (result === '1') {
       bgColor = 'bg-green-100 dark:bg-green-900/30';
       textColor = 'text-green-800 dark:text-green-300 font-bold';
+      hoverColor = gameId ? 'hover:bg-green-200 dark:hover:bg-green-900/50' : '';
     } else if (result === '0') {
       bgColor = 'bg-red-100 dark:bg-red-900/30';
       textColor = 'text-red-800 dark:text-red-300';
+      hoverColor = gameId ? 'hover:bg-red-200 dark:hover:bg-red-900/50' : '';
     } else if (result === '½') {
       bgColor = 'bg-yellow-100 dark:bg-yellow-900/30';
       textColor = 'text-yellow-800 dark:text-yellow-300 font-medium';
+      hoverColor = gameId ? 'hover:bg-yellow-200 dark:hover:bg-yellow-900/50' : '';
     }
 
-    return (
-      <div className={`${bgColor} ${textColor} px-2 py-1 text-center rounded text-sm`}>
+    const cellContent = (
+      <div className={`${bgColor} ${textColor} ${hoverColor} px-2 py-1 text-center rounded text-sm transition-colors ${gameId ? 'cursor-pointer' : ''}`}>
         {result}
       </div>
     );
+
+    if (gameId) {
+      return (
+        <Link href={`/analyzed_games/${gameId}`} title="View game">
+          {cellContent}
+        </Link>
+      );
+    }
+
+    return cellContent;
   };
 
   return (
@@ -111,7 +133,7 @@ export default function Crosstable({ players, crosstable }: CrosstableProps) {
                     <div className="px-2 py-1 text-center text-gray-400">×</div>
                   ) : (
                     getResultCell(
-                      crosstable[player.fide_id]?.[opponent.fide_id] || '-'
+                      crosstable[player.fide_id]?.[opponent.fide_id] || { result: '-', gameId: null }
                     )
                   )}
                 </td>

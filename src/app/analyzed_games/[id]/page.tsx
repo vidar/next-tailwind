@@ -127,6 +127,11 @@ export default function AnalyzedGameDetailPage() {
 
       const data = await response.json();
       setAnalysis(data.analysis);
+      // Debug: log analysis_results structure
+      console.log('Analysis results structure:', data.analysis?.analysis_results);
+      if (data.analysis?.analysis_results?.moves?.[0]) {
+        console.log('First move data:', data.analysis.analysis_results.moves[0]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -807,64 +812,174 @@ export default function AnalyzedGameDetailPage() {
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 max-h-96 overflow-y-auto">
                   <div className="space-y-1">
-                    {moves.map((move, idx) => {
-                      const moveNum = idx + 1;
-                      const hasNote = hasAnnotation(moveNum);
+                    {/* Group moves by pairs (white and black) */}
+                    {Array.from({ length: Math.ceil(moves.length / 2) }).map((_, pairIndex) => {
+                      const whiteIdx = pairIndex * 2;
+                      const blackIdx = pairIndex * 2 + 1;
+                      const whiteMove = moves[whiteIdx];
+                      const blackMove = moves[blackIdx];
+                      const whiteMoveNum = whiteIdx + 1;
+                      const blackMoveNum = blackIdx + 1;
+                      const whiteHasNote = hasAnnotation(whiteMoveNum);
+                      const blackHasNote = blackMove ? hasAnnotation(blackMoveNum) : false;
+
+                      // Get evaluations - check multiple possible structures
+                      let whiteEval: number | undefined;
+                      let blackEval: number | undefined;
+
+                      // Try different paths where evaluation might be stored
+                      if (analysis?.analysis_results?.moves?.[whiteIdx]) {
+                        const whiteMove = analysis.analysis_results.moves[whiteIdx];
+                        whiteEval = whiteMove.evaluation ?? whiteMove.eval ?? whiteMove.score;
+                      }
+
+                      if (blackMove && analysis?.analysis_results?.moves?.[blackIdx]) {
+                        const blackMoveData = analysis.analysis_results.moves[blackIdx];
+                        blackEval = blackMoveData.evaluation ?? blackMoveData.eval ?? blackMoveData.score;
+                      }
+
+                      const formatEval = (evalScore: number | undefined) => {
+                        if (evalScore === undefined) return '';
+                        if (evalScore > 0) return `+${(evalScore / 100).toFixed(1)}`;
+                        return (evalScore / 100).toFixed(1);
+                      };
+
                       return (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-1"
-                          ref={(el) => {
-                            moveRefs.current[moveNum] = el;
-                          }}
-                        >
-                          <button
-                            onClick={() => setMoveIndex(moveNum)}
-                            className={`flex-1 text-left px-2 py-1 rounded text-sm font-mono ${
-                              moveIndex === moveNum
-                                ? "bg-blue-500 text-white"
-                                : "hover:bg-gray-200 dark:hover:bg-gray-600"
-                            }`}
-                          >
-                            {Math.floor(idx / 2) + 1}
-                            {idx % 2 === 0 ? ". " : "... "}
-                            {move}
-                            {hasNote && <span className="ml-1">💬</span>}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              // Shift+Click for quick AI generation
-                              if (e.shiftKey) {
-                                e.preventDefault();
-                                generateAIAnnotationQuick(moveNum);
-                              } else {
-                                openAnnotationModal(moveNum);
+                        <div key={pairIndex} className="flex items-center gap-1">
+                          {/* Move number */}
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-8">
+                            {pairIndex + 1}.
+                          </span>
+
+                          {/* White's move */}
+                          <div className="flex items-center gap-1 flex-1">
+                            <button
+                              onClick={() => setMoveIndex(whiteMoveNum)}
+                              ref={(el) => {
+                                moveRefs.current[whiteMoveNum] = el;
+                              }}
+                              className={`flex-1 text-left px-2 py-1 rounded text-sm font-mono ${
+                                moveIndex === whiteMoveNum
+                                  ? "bg-blue-500 text-white"
+                                  : "hover:bg-gray-200 dark:hover:bg-gray-600"
+                              }`}
+                            >
+                              {whiteMove}
+                              {whiteHasNote && <span className="ml-1">💬</span>}
+                              {whiteEval !== undefined && (
+                                <span className={`ml-2 text-xs ${
+                                  moveIndex === whiteMoveNum
+                                    ? "text-white opacity-80"
+                                    : whiteEval > 0
+                                    ? "text-green-700 dark:text-green-400"
+                                    : whiteEval < 0
+                                    ? "text-red-700 dark:text-red-400"
+                                    : "text-gray-600 dark:text-gray-400"
+                                }`}>
+                                  {formatEval(whiteEval)}
+                                </span>
+                              )}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                if (e.shiftKey) {
+                                  e.preventDefault();
+                                  generateAIAnnotationQuick(whiteMoveNum);
+                                } else {
+                                  openAnnotationModal(whiteMoveNum);
+                                }
+                              }}
+                              disabled={generatingMoves.has(whiteMoveNum)}
+                              className={`px-2 py-1 rounded text-xs ${
+                                generatingMoves.has(whiteMoveNum)
+                                  ? "bg-yellow-400 cursor-wait"
+                                  : whiteHasNote
+                                  ? "bg-purple-500 text-white hover:bg-purple-600"
+                                  : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
+                              }`}
+                              title={
+                                generatingMoves.has(whiteMoveNum)
+                                  ? "Generating annotation..."
+                                  : whiteHasNote
+                                  ? "Edit annotation (Shift+Click for AI)"
+                                  : "Add annotation (Shift+Click for AI)"
                               }
-                            }}
-                            disabled={generatingMoves.has(moveNum)}
-                            className={`px-2 py-1 rounded text-xs relative ${
-                              generatingMoves.has(moveNum)
-                                ? "bg-yellow-400 cursor-wait"
-                                : hasNote
-                                ? "bg-purple-500 text-white hover:bg-purple-600"
-                                : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
-                            }`}
-                            title={
-                              generatingMoves.has(moveNum)
-                                ? "Generating annotation..."
-                                : hasNote
-                                ? "Edit annotation (Shift+Click for AI)"
-                                : "Add annotation (Shift+Click for AI)"
-                            }
-                          >
-                            {generatingMoves.has(moveNum) ? (
-                              <span className="inline-block w-3 h-3 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></span>
-                            ) : hasNote ? (
-                              "✏️"
-                            ) : (
-                              "+"
-                            )}
-                          </button>
+                            >
+                              {generatingMoves.has(whiteMoveNum) ? (
+                                <span className="inline-block w-3 h-3 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></span>
+                              ) : whiteHasNote ? (
+                                "✏️"
+                              ) : (
+                                "+"
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Black's move */}
+                          {blackMove && (
+                            <div className="flex items-center gap-1 flex-1">
+                              <button
+                                onClick={() => setMoveIndex(blackMoveNum)}
+                                ref={(el) => {
+                                  moveRefs.current[blackMoveNum] = el;
+                                }}
+                                className={`flex-1 text-left px-2 py-1 rounded text-sm font-mono ${
+                                  moveIndex === blackMoveNum
+                                    ? "bg-blue-500 text-white"
+                                    : "hover:bg-gray-200 dark:hover:bg-gray-600"
+                                }`}
+                              >
+                                {blackMove}
+                                {blackHasNote && <span className="ml-1">💬</span>}
+                                {blackEval !== undefined && (
+                                  <span className={`ml-2 text-xs ${
+                                    moveIndex === blackMoveNum
+                                      ? "text-white opacity-80"
+                                      : blackEval > 0
+                                      ? "text-green-700 dark:text-green-400"
+                                      : blackEval < 0
+                                      ? "text-red-700 dark:text-red-400"
+                                      : "text-gray-600 dark:text-gray-400"
+                                  }`}>
+                                    {formatEval(blackEval)}
+                                  </span>
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  if (e.shiftKey) {
+                                    e.preventDefault();
+                                    generateAIAnnotationQuick(blackMoveNum);
+                                  } else {
+                                    openAnnotationModal(blackMoveNum);
+                                  }
+                                }}
+                                disabled={generatingMoves.has(blackMoveNum)}
+                                className={`px-2 py-1 rounded text-xs ${
+                                  generatingMoves.has(blackMoveNum)
+                                    ? "bg-yellow-400 cursor-wait"
+                                    : blackHasNote
+                                    ? "bg-purple-500 text-white hover:bg-purple-600"
+                                    : "bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
+                                }`}
+                                title={
+                                  generatingMoves.has(blackMoveNum)
+                                    ? "Generating annotation..."
+                                    : blackHasNote
+                                    ? "Edit annotation (Shift+Click for AI)"
+                                    : "Add annotation (Shift+Click for AI)"
+                                }
+                              >
+                                {generatingMoves.has(blackMoveNum) ? (
+                                  <span className="inline-block w-3 h-3 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></span>
+                                ) : blackHasNote ? (
+                                  "✏️"
+                                ) : (
+                                  "+"
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
