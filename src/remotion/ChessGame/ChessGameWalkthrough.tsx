@@ -20,6 +20,7 @@ import "chessground/assets/chessground.cburnett.css";
 import "./chessground-override.css";
 import { LogoIntro } from "./LogoIntro";
 import { LogoOutro } from "./LogoOutro";
+import { LogoOutroWithCTA } from "./LogoOutroWithCTA";
 
 // Main game content component
 const GameContent = ({
@@ -332,9 +333,9 @@ export const ChessGameWalkthrough = ({
         />
       </Sequence>
 
-      {/* Outro */}
+      {/* Outro with CTA */}
       <Sequence from={INTRO_DURATION + GAME_DURATION} durationInFrames={OUTRO_DURATION}>
-        <LogoOutro />
+        <LogoOutroWithCTA />
       </Sequence>
     </AbsoluteFill>
   );

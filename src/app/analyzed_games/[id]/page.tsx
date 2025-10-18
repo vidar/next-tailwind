@@ -53,6 +53,9 @@ export default function AnalyzedGameDetailPage() {
   // Composition type selection
   const [compositionType, setCompositionType] = useState<"walkthrough" | "annotated">("walkthrough");
 
+  // Aspect ratio selection
+  const [aspectRatio, setAspectRatio] = useState<"landscape" | "portrait">("landscape");
+
   // Chess rendering hook
   const { renderMedia, state: renderState, undo } = useChessRendering(id);
 
@@ -441,8 +444,16 @@ export default function AnalyzedGameDetailPage() {
                     Annotated {annotations.length === 0 ? "(no annotations)" : `(${annotations.length})`}
                   </option>
                 </select>
+                <select
+                  value={aspectRatio}
+                  onChange={(e) => setAspectRatio(e.target.value as "landscape" | "portrait")}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  <option value="landscape">Landscape (16:9)</option>
+                  <option value="portrait">Portrait (9:16)</option>
+                </select>
                 <button
-                  onClick={() => renderMedia(compositionType)}
+                  onClick={() => renderMedia(compositionType, aspectRatio)}
                   disabled={renderState.status === "invoking" || (compositionType === "annotated" && annotations.length === 0)}
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
@@ -538,7 +549,7 @@ export default function AnalyzedGameDetailPage() {
                       {video.composition_type.charAt(0).toUpperCase() + video.composition_type.slice(1)} Video
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Rendered {new Date(video.completed_at || video.created_at).toLocaleDateString()}
+                      Rendered {new Date(video.completed_at || video.created_at).toLocaleString()}
                     </p>
                     {video.metadata?.youtubeUrl && (
                       <a

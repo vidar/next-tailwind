@@ -70,10 +70,12 @@ export async function POST(request: NextRequest) {
     // Create a readable stream from the buffer
     const videoStream = Readable.from(videoBuffer);
 
-    // Get game info from metadata
+    // Get game info and metadata from video
     const gameInfo = video.metadata?.gameInfo || {};
     const title = `${gameInfo.white || "Player 1"} vs ${gameInfo.black || "Player 2"} - Chess Game Analysis`;
-    const description = `Chess game analysis and walkthrough.
+
+    // Use generated description with chapters, or fallback to simple description
+    const description = video.metadata?.description || `Chess game analysis and walkthrough.
 
 White: ${gameInfo.white || "Unknown"}
 Black: ${gameInfo.black || "Unknown"}
@@ -81,6 +83,9 @@ Result: ${gameInfo.result || "Unknown"}
 Date: ${gameInfo.date || "Unknown"}
 
 Generated with chessmoments.com`;
+
+    // Extract hashtags from description or use defaults
+    const tags = video.metadata?.hashtags || ["chess", "chessanalysis", "chessgame", "chessstrategy"];
 
     // Upload to YouTube
     console.log("Uploading to YouTube...");
@@ -90,7 +95,7 @@ Generated with chessmoments.com`;
         snippet: {
           title,
           description,
-          tags: ["chess", "chess analysis", "chess game", "chess strategy"],
+          tags,
           categoryId: "20", // Gaming category
         },
         status: {

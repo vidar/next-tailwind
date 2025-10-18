@@ -14,7 +14,8 @@ import { ChessRenderRequest } from "../../../../types/schema";
 import { executeApi } from "../../../helpers/api-response";
 import { getAnalysisById, createVideo, getAnnotationsByGameId } from "@/lib/db";
 import { Chess } from "chess.js";
-import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, CHESS_VIDEO_FPS, CHESS_SECONDS_PER_MOVE } from "../../../../types/constants";
+import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, CHESS_VIDEO_FPS, CHESS_SECONDS_PER_MOVE, ASPECT_RATIOS } from "../../../../types/constants";
+import { generateChapters, generateDescription } from "@/lib/youtube-metadata";
 
 function extractGameInfo(pgn: string) {
   const whiteMatch = pgn.match(/\[White "([^"]+)"\]/);
@@ -91,6 +92,8 @@ export const POST = executeApi<
 
   // Determine composition type and fetch annotations if needed
   const compositionType = body.compositionType || "walkthrough";
+  const aspectRatio = body.aspectRatio || "landscape";
+
   let inputProps: any = {
     pgn: analysis.pgn,
     analysisResults: analysis.analysis_results,
@@ -98,15 +101,42 @@ export const POST = executeApi<
   };
 
   let compositionId = CHESS_GAME_COMP_NAME;
+  let annotations: any[] = [];
 
   if (compositionType === "annotated") {
-    const annotations = await getAnnotationsByGameId(body.gameId);
+    annotations = await getAnnotationsByGameId(body.gameId);
     if (annotations.length === 0) {
       throw new Error("Cannot render annotated video without annotations");
     }
     inputProps.annotations = annotations;
     compositionId = CHESS_GAME_ANNOTATED_COMP_NAME;
   }
+
+  // Generate YouTube metadata (chapters, description, etc.)
+  const chapters = generateChapters(
+    analysis.pgn,
+    annotations,
+    compositionType as any,
+    CHESS_VIDEO_FPS
+  );
+
+  const description = generateDescription(
+    gameInfo,
+    analysis.pgn,
+    chapters,
+    annotations,
+    body.gameId
+  );
+
+  const metadata = {
+    gameInfo,
+    chapters,
+    description,
+    hashtags: chapters.length > 0 ? [] : [], // Hashtags are included in description
+  };
+
+  // Get dimensions based on aspect ratio
+  const dimensions = ASPECT_RATIOS[aspectRatio as keyof typeof ASPECT_RATIOS];
 
   // Start Lambda render
   const result = await renderMediaOnLambda({
@@ -120,14 +150,17 @@ export const POST = executeApi<
     serveUrl: SITE_NAME,
     composition: compositionId,
     inputProps,
+    imageFormat: "jpeg",
+    width: dimensions.width,
+    height: dimensions.height,
     framesPerLambda: 100,
     downloadBehavior: {
       type: "download",
-      fileName: `chess-${compositionType}-${body.gameId}-${Date.now()}.mp4`,
+      fileName: `chess-${compositionType}-${aspectRatio}-${body.gameId}-${Date.now()}.mp4`,
     },
   });
 
-  // Create video record with render metadata
+  // Create video record with render and YouTube metadata
   const video = await createVideo(
     body.userId,
     body.gameId,
@@ -135,6 +168,7 @@ export const POST = executeApi<
     {
       renderId: result.renderId,
       bucketName: result.bucketName,
+      ...metadata,
     }
   );
 

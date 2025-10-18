@@ -20,6 +20,7 @@ import "chessground/assets/chessground.cburnett.css";
 import "./chessground-override.css";
 import { LogoIntro } from "./LogoIntro";
 import { LogoOutro } from "./LogoOutro";
+import { LogoOutroWithCTA } from "./LogoOutroWithCTA";
 
 // Extend ChessGameProps to include annotations
 export const ChessGameAnnotatedProps = ChessGameProps.extend({
@@ -520,9 +521,9 @@ export const ChessGameAnnotated = ({
         />
       </Sequence>
 
-      {/* Outro */}
+      {/* Outro with CTA */}
       <Sequence from={INTRO_DURATION + GAME_DURATION} durationInFrames={OUTRO_DURATION}>
-        <LogoOutro />
+        <LogoOutroWithCTA />
       </Sequence>
     </AbsoluteFill>
   );

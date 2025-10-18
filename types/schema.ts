@@ -31,6 +31,7 @@ export const ChessRenderRequest = z.object({
   gameId: z.string().uuid(),
   userId: z.string(),
   compositionType: z.string().optional().default("walkthrough"),
+  aspectRatio: z.enum(["landscape", "portrait"]).optional().default("landscape"),
 });
 
 export const ChessProgressRequest = z.object({

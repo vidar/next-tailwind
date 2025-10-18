@@ -78,8 +78,16 @@ export const defaultChessGameAnnotatedProps: z.infer<typeof ChessGameAnnotatedPr
   ],
 };
 
-// Chess video settings (portrait for social media)
-export const CHESS_VIDEO_WIDTH = 1080;
-export const CHESS_VIDEO_HEIGHT = 1920;
+// Chess video settings
 export const CHESS_VIDEO_FPS = 30;
 export const CHESS_SECONDS_PER_MOVE = 1;
+
+// Aspect ratio presets
+export const ASPECT_RATIOS = {
+  landscape: { width: 1920, height: 1080, label: "Landscape (16:9)" },
+  portrait: { width: 1080, height: 1920, label: "Portrait (9:16)" },
+} as const;
+
+// Default dimensions (landscape for YouTube chapters support)
+export const CHESS_VIDEO_WIDTH = ASPECT_RATIOS.landscape.width;
+export const CHESS_VIDEO_HEIGHT = ASPECT_RATIOS.landscape.height;
