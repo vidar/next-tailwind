@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/cdn-signer/node_modules
 /.pnp
 .pnp.js
 

@@ -539,11 +539,11 @@ export default function AnalyzedGameDetailPage() {
   const gameInfo = extractGameInfo(analysis.pgn);
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold">
+            <h1 className="text-2xl md:text-4xl font-bold">
               {gameInfo.white} vs {gameInfo.black}
             </h1>
             {gameInfo.link && (
@@ -557,7 +557,7 @@ export default function AnalyzedGameDetailPage() {
               </a>
             )}
           </div>
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-wrap gap-2 md:gap-4 items-center">
             <Link
               href={`/preview/${id}`}
               className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-medium transition-colors"
@@ -597,7 +597,7 @@ export default function AnalyzedGameDetailPage() {
             ) : null}
             <Link
               href="/analyzed_games"
-              className="text-blue-500 hover:text-blue-600 underline"
+              className="text-blue-500 hover:text-blue-600 underline text-sm md:text-base"
             >
               Back to Analyzed Games
             </Link>
@@ -672,54 +672,56 @@ export default function AnalyzedGameDetailPage() {
                 <p className="text-sm">{uploadError}</p>
               </div>
             )}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {existingVideos.map((video) => (
                 <div
                   key={video.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden"
                 >
-                  <div className="flex-1">
-                    <p className="font-medium">
-                      {video.composition_type.charAt(0).toUpperCase() + video.composition_type.slice(1)} Video
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Rendered {new Date(video.completed_at || video.created_at).toLocaleString()}
-                    </p>
-                    {video.metadata?.youtubeUrl && (
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {video.composition_type.charAt(0).toUpperCase() + video.composition_type.slice(1)} Video
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Rendered {new Date(video.completed_at || video.created_at).toLocaleString()}
+                      </p>
+                      {video.metadata?.youtubeUrl && (
+                        <a
+                          href={video.metadata.youtubeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-red-500 hover:text-red-600 underline mt-1 inline-block"
+                        >
+                          View on YouTube →
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
                       <a
-                        href={video.metadata.youtubeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-red-500 hover:text-red-600 underline mt-1 inline-block"
+                        href={video.s3_url}
+                        download
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
                       >
-                        View on YouTube →
+                        Download
                       </a>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <a
-                      href={video.s3_url}
-                      download
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
-                    >
-                      Download
-                    </a>
-                    {!video.metadata?.youtubeUrl && (
-                      <button
-                        onClick={() => uploadToYouTube(video.id)}
-                        disabled={uploadingVideoId === video.id}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                        {uploadingVideoId === video.id ? (
-                          <>
-                            <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                            Uploading...
-                          </>
-                        ) : (
-                          "Upload to YouTube"
-                        )}
-                      </button>
-                    )}
+                      {!video.metadata?.youtubeUrl && (
+                        <button
+                          onClick={() => uploadToYouTube(video.id)}
+                          disabled={uploadingVideoId === video.id}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {uploadingVideoId === video.id ? (
+                            <>
+                              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                              Uploading...
+                            </>
+                          ) : (
+                            "Upload to YouTube"
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -727,16 +729,16 @@ export default function AnalyzedGameDetailPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Chess Board */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <div className="flex gap-4 items-start">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 md:p-6">
+              <div className="flex gap-2 md:gap-4 items-start">
                 {/* Evaluation Bar */}
                 <div className="flex flex-col items-center">
                   <div
-                    className="w-8 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600"
-                    style={{ height: "600px" }}
+                    className="w-6 md:w-8 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600"
+                    style={{ height: "min(600px, calc(100vw - 4rem))" }}
                   >
                     <div
                       className="bg-gray-800 dark:bg-white transition-all duration-300 flex items-start justify-center"
@@ -755,20 +757,21 @@ export default function AnalyzedGameDetailPage() {
                 {/* Chess Board */}
                 <div
                   ref={boardRef}
+                  className="flex-1"
                   style={{
-                    width: "600px",
-                    height: "600px",
-                    maxWidth: "100%",
+                    width: "100%",
+                    maxWidth: "600px",
+                    aspectRatio: "1 / 1",
                   }}
                 ></div>
               </div>
 
               {/* Navigation Controls */}
-              <div className="flex items-center justify-center gap-4 mt-6">
+              <div className="flex items-center justify-center gap-2 md:gap-4 mt-4 md:mt-6">
                 <button
                   onClick={goToStart}
                   disabled={moveIndex === 0}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm md:text-base"
                   title="First move"
                 >
                   &lt;&lt;
@@ -776,18 +779,18 @@ export default function AnalyzedGameDetailPage() {
                 <button
                   onClick={goToPrevious}
                   disabled={moveIndex === 0}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm md:text-base"
                   title="Previous move"
                 >
                   &lt;
                 </button>
-                <div className="text-lg font-medium min-w-[100px] text-center">
+                <div className="text-sm md:text-lg font-medium min-w-[80px] md:min-w-[100px] text-center">
                   Move {moveIndex} / {moves.length}
                 </div>
                 <button
                   onClick={goToNext}
                   disabled={moveIndex === moves.length}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm md:text-base"
                   title="Next move"
                 >
                   &gt;
@@ -795,7 +798,7 @@ export default function AnalyzedGameDetailPage() {
                 <button
                   onClick={goToEnd}
                   disabled={moveIndex === moves.length}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm md:text-base"
                   title="Last move"
                 >
                   &gt;&gt;
@@ -803,14 +806,14 @@ export default function AnalyzedGameDetailPage() {
               </div>
 
               {/* Move List with Annotations */}
-              <div className="mt-6">
+              <div className="mt-4 md:mt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold">Moves</h3>
+                  <h3 className="text-base md:text-lg font-semibold">Moves</h3>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {annotations.length} annotation{annotations.length !== 1 ? 's' : ''}
                   </span>
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 md:p-4 max-h-48 md:max-h-64 overflow-y-auto">
                   <div className="space-y-1">
                     {/* Group moves by pairs (white and black) */}
                     {Array.from({ length: Math.ceil(moves.length / 2) }).map((_, pairIndex) => {
@@ -847,7 +850,7 @@ export default function AnalyzedGameDetailPage() {
                       return (
                         <div key={pairIndex} className="flex items-center gap-1">
                           {/* Move number */}
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-8">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-6 md:w-8">
                             {pairIndex + 1}.
                           </span>
 
@@ -858,7 +861,7 @@ export default function AnalyzedGameDetailPage() {
                               ref={(el) => {
                                 moveRefs.current[whiteMoveNum] = el;
                               }}
-                              className={`flex-1 text-left px-2 py-1 rounded text-sm font-mono ${
+                              className={`flex-1 text-left px-1.5 md:px-2 py-1 rounded text-xs md:text-sm font-mono ${
                                 moveIndex === whiteMoveNum
                                   ? "bg-blue-500 text-white"
                                   : "hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -867,7 +870,7 @@ export default function AnalyzedGameDetailPage() {
                               {whiteMove}
                               {whiteHasNote && <span className="ml-1">💬</span>}
                               {whiteEval !== undefined && (
-                                <span className={`ml-2 text-xs ${
+                                <span className={`ml-1 md:ml-2 text-xs ${
                                   moveIndex === whiteMoveNum
                                     ? "text-white opacity-80"
                                     : whiteEval > 0
@@ -890,7 +893,7 @@ export default function AnalyzedGameDetailPage() {
                                 }
                               }}
                               disabled={generatingMoves.has(whiteMoveNum)}
-                              className={`px-2 py-1 rounded text-xs ${
+                              className={`px-1.5 md:px-2 py-1 rounded text-xs ${
                                 generatingMoves.has(whiteMoveNum)
                                   ? "bg-yellow-400 cursor-wait"
                                   : whiteHasNote
@@ -923,7 +926,7 @@ export default function AnalyzedGameDetailPage() {
                                 ref={(el) => {
                                   moveRefs.current[blackMoveNum] = el;
                                 }}
-                                className={`flex-1 text-left px-2 py-1 rounded text-sm font-mono ${
+                                className={`flex-1 text-left px-1.5 md:px-2 py-1 rounded text-xs md:text-sm font-mono ${
                                   moveIndex === blackMoveNum
                                     ? "bg-blue-500 text-white"
                                     : "hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -932,7 +935,7 @@ export default function AnalyzedGameDetailPage() {
                                 {blackMove}
                                 {blackHasNote && <span className="ml-1">💬</span>}
                                 {blackEval !== undefined && (
-                                  <span className={`ml-2 text-xs ${
+                                  <span className={`ml-1 md:ml-2 text-xs ${
                                     moveIndex === blackMoveNum
                                       ? "text-white opacity-80"
                                       : blackEval > 0
@@ -955,7 +958,7 @@ export default function AnalyzedGameDetailPage() {
                                   }
                                 }}
                                 disabled={generatingMoves.has(blackMoveNum)}
-                                className={`px-2 py-1 rounded text-xs ${
+                                className={`px-1.5 md:px-2 py-1 rounded text-xs ${
                                   generatingMoves.has(blackMoveNum)
                                     ? "bg-yellow-400 cursor-wait"
                                     : blackHasNote
@@ -990,18 +993,18 @@ export default function AnalyzedGameDetailPage() {
           </div>
 
           {/* Game Info & Analysis */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Game Info */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
               <button
                 onClick={() => setIsGameInfoOpen(!isGameInfoOpen)}
-                className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
+                className="w-full p-4 md:p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
               >
-                <h2 className="text-xl font-semibold">Game Information</h2>
-                <span className="text-2xl">{isGameInfoOpen ? "−" : "+"}</span>
+                <h2 className="text-lg md:text-xl font-semibold">Game Information</h2>
+                <span className="text-xl md:text-2xl">{isGameInfoOpen ? "−" : "+"}</span>
               </button>
               {isGameInfoOpen && (
-                <div className="px-6 pb-6 space-y-2 text-sm">
+                <div className="px-4 md:px-6 pb-4 md:pb-6 space-y-2 text-xs md:text-sm">
                   <div>
                     <span className="font-medium">White:</span> {gameInfo.white}
                   </div>
@@ -1030,14 +1033,14 @@ export default function AnalyzedGameDetailPage() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
               <button
                 onClick={() => setIsPgnOpen(!isPgnOpen)}
-                className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
+                className="w-full p-4 md:p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
               >
-                <h2 className="text-xl font-semibold">PGN</h2>
-                <span className="text-2xl">{isPgnOpen ? "−" : "+"}</span>
+                <h2 className="text-lg md:text-xl font-semibold">PGN</h2>
+                <span className="text-xl md:text-2xl">{isPgnOpen ? "−" : "+"}</span>
               </button>
               {isPgnOpen && (
-                <div className="px-6 pb-6">
-                  <pre className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-64">
+                <div className="px-4 md:px-6 pb-4 md:pb-6">
+                  <pre className="bg-gray-100 dark:bg-gray-700 p-3 md:p-4 rounded-lg text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-48 md:max-h-64">
                     {analysis.pgn}
                   </pre>
                 </div>
@@ -1049,14 +1052,14 @@ export default function AnalyzedGameDetailPage() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
                 <button
                   onClick={() => setIsAnalysisOpen(!isAnalysisOpen)}
-                  className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
+                  className="w-full p-4 md:p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
                 >
-                  <h2 className="text-xl font-semibold">Analysis Results</h2>
-                  <span className="text-2xl">{isAnalysisOpen ? "−" : "+"}</span>
+                  <h2 className="text-lg md:text-xl font-semibold">Analysis Results</h2>
+                  <span className="text-xl md:text-2xl">{isAnalysisOpen ? "−" : "+"}</span>
                 </button>
                 {isAnalysisOpen && (
-                  <div className="px-6 pb-6">
-                    <pre className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-xs overflow-x-auto max-h-96">
+                  <div className="px-4 md:px-6 pb-4 md:pb-6">
+                    <pre className="bg-gray-100 dark:bg-gray-700 p-3 md:p-4 rounded-lg text-xs overflow-x-auto max-h-64 md:max-h-96">
                       {JSON.stringify(analysis.analysis_results, null, 2)}
                     </pre>
                   </div>
