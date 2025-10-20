@@ -58,6 +58,9 @@ export default function AnalyzedGameDetailPage() {
   // Aspect ratio selection
   const [aspectRatio, setAspectRatio] = useState<"landscape" | "portrait">("landscape");
 
+  // Board orientation
+  const [boardOrientation, setBoardOrientation] = useState<"white" | "black">("white");
+
   // Chess rendering hook
   const { renderMedia, state: renderState, undo } = useChessRendering(id);
 
@@ -81,6 +84,7 @@ export default function AnalyzedGameDetailPage() {
         viewOnly: true,
         coordinates: true,
         fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        orientation: boardOrientation,
       });
 
       // Load the game
@@ -113,6 +117,13 @@ export default function AnalyzedGameDetailPage() {
       }
     }
   }, [moveIndex]);
+
+  // Update board orientation when it changes
+  useEffect(() => {
+    if (cgRef.current) {
+      cgRef.current.set({ orientation: boardOrientation });
+    }
+  }, [boardOrientation]);
 
   const fetchAnalysis = async () => {
     setLoading(true);
@@ -586,8 +597,16 @@ export default function AnalyzedGameDetailPage() {
                   <option value="landscape">Landscape (16:9)</option>
                   <option value="portrait">Portrait (9:16)</option>
                 </select>
+                <select
+                  value={boardOrientation}
+                  onChange={(e) => setBoardOrientation(e.target.value as "white" | "black")}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  <option value="white">White's Perspective</option>
+                  <option value="black">Black's Perspective</option>
+                </select>
                 <button
-                  onClick={() => renderMedia(compositionType, aspectRatio)}
+                  onClick={() => renderMedia(compositionType, aspectRatio, boardOrientation)}
                   disabled={compositionType === "annotated" && annotations.length === 0}
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
@@ -755,15 +774,26 @@ export default function AnalyzedGameDetailPage() {
                 </div>
 
                 {/* Chess Board */}
-                <div
-                  ref={boardRef}
-                  className="flex-1"
-                  style={{
-                    width: "100%",
-                    maxWidth: "600px",
-                    aspectRatio: "1 / 1",
-                  }}
-                ></div>
+                <div className="flex-1 flex flex-col items-center gap-2">
+                  <div
+                    ref={boardRef}
+                    className="w-full"
+                    style={{
+                      maxWidth: "600px",
+                      aspectRatio: "1 / 1",
+                    }}
+                  ></div>
+                  <button
+                    onClick={() => setBoardOrientation(boardOrientation === "white" ? "black" : "white")}
+                    className="px-3 py-1.5 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 text-sm font-medium transition-colors flex items-center gap-2"
+                    title="Flip board"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    Flip Board
+                  </button>
+                </div>
               </div>
 
               {/* Navigation Controls */}

@@ -32,6 +32,7 @@ export const ChessRenderRequest = z.object({
   userId: z.string().optional(), // Optional - will use Clerk auth if not provided
   compositionType: z.string().optional().default("walkthrough"),
   aspectRatio: z.enum(["landscape", "portrait"]).optional().default("landscape"),
+  orientation: z.enum(["white", "black"]).optional().default("white"),
 });
 
 export const ChessProgressRequest = z.object({

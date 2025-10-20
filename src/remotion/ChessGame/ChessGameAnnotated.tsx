@@ -99,6 +99,7 @@ const GameContent = ({
   analysisResults,
   gameInfo,
   annotations,
+  orientation = "white",
   introFrames,
 }: z.infer<typeof ChessGameAnnotatedProps> & { introFrames: number }) => {
   const frame = useCurrentFrame();
@@ -235,7 +236,7 @@ const GameContent = ({
         viewOnly: true,
         coordinates: true,
         fen: currentFen,
-        orientation: "white",
+        orientation: orientation,
         drawable: {
           enabled: false,
         },
@@ -471,6 +472,7 @@ export const ChessGameAnnotated = ({
   analysisResults,
   gameInfo,
   annotations,
+  orientation = "white",
 }: z.infer<typeof ChessGameAnnotatedProps>) => {
   const { fps } = useVideoConfig();
 
@@ -514,6 +516,7 @@ export const ChessGameAnnotated = ({
           analysisResults={analysisResults}
           gameInfo={gameInfo}
           annotations={annotations}
+          orientation={orientation}
           introFrames={INTRO_DURATION}
         />
       </Sequence>

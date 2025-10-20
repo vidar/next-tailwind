@@ -24,6 +24,7 @@ const GameContent = ({
   pgn,
   analysisResults,
   gameInfo,
+  orientation = "white",
   introFrames,
 }: z.infer<typeof ChessGameProps> & { introFrames: number }) => {
   const frame = useCurrentFrame();
@@ -74,7 +75,7 @@ const GameContent = ({
         viewOnly: true,
         coordinates: true,
         fen: currentFen, // Start with the current FEN, not the starting position
-        orientation: "white",
+        orientation: orientation,
         drawable: {
           enabled: false,
         },
@@ -300,6 +301,7 @@ export const ChessGameWalkthrough = ({
   pgn,
   analysisResults,
   gameInfo,
+  orientation = "white",
 }: z.infer<typeof ChessGameProps>) => {
   const { fps } = useVideoConfig();
 
@@ -324,6 +326,7 @@ export const ChessGameWalkthrough = ({
       <Sequence from={INTRO_DURATION} durationInFrames={GAME_DURATION}>
         <GameContent
           pgn={pgn}
+          orientation={orientation}
           analysisResults={analysisResults}
           gameInfo={gameInfo}
           introFrames={INTRO_DURATION}

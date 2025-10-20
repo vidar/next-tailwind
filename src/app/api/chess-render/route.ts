@@ -70,11 +70,13 @@ export const POST = executeApi<
   // Determine composition type and fetch annotations if needed
   const compositionType = body.compositionType || "walkthrough";
   const aspectRatio = body.aspectRatio || "landscape";
+  const orientation = body.orientation || "white";
 
   let inputProps: any = {
     pgn: analysis.pgn,
     analysisResults: analysis.analysis_results,
     gameInfo,
+    orientation,
   };
 
   let compositionId = CHESS_GAME_COMP_NAME;
