@@ -41,6 +41,7 @@ export function generateChapters(
   const INTRO_DURATION = 3; // seconds
   const SECONDS_PER_MOVE = 1;
   const ANNOTATION_PAUSE = 4; // seconds per annotation
+  const MIN_CHAPTER_LENGTH = 15; // YouTube requires minimum 15 seconds per chapter
 
   // Intro chapter
   chapters.push({
@@ -55,24 +56,31 @@ export function generateChapters(
     const annotationMap = new Map<number, GameAnnotation>();
     annotations.forEach(ann => annotationMap.set(ann.move_index, ann));
 
+    let lastChapterTime = 0;
+
     for (let i = 0; i <= moves.length; i++) {
       if (annotationMap.has(i)) {
-        const annotation = annotationMap.get(i)!;
-        const moveNotation = i > 0 ? moves[i - 1] : 'Starting Position';
-        const moveNumber = i > 0 ? Math.floor((i - 1) / 2) + 1 : 0;
-        const color = i % 2 === 1 ? '.' : '...';
+        // Only add chapter if it's been at least 15 seconds since the last chapter
+        if (currentTime - lastChapterTime >= MIN_CHAPTER_LENGTH) {
+          const annotation = annotationMap.get(i)!;
+          const moveNotation = i > 0 ? moves[i - 1] : 'Starting Position';
+          const moveNumber = i > 0 ? Math.floor((i - 1) / 2) + 1 : 0;
+          const color = i % 2 === 1 ? '.' : '...';
 
-        // Truncate annotation text for chapter title
-        const truncatedText = annotation.annotation_text.length > 40
-          ? annotation.annotation_text.substring(0, 40) + '...'
-          : annotation.annotation_text;
+          // Truncate annotation text for chapter title
+          const truncatedText = annotation.annotation_text.length > 40
+            ? annotation.annotation_text.substring(0, 40) + '...'
+            : annotation.annotation_text;
 
-        chapters.push({
-          timestamp: formatTimestamp(currentTime),
-          title: i > 0
-            ? `${moveNumber}${color} ${moveNotation} - ${truncatedText}`
-            : `Starting Position - ${truncatedText}`,
-        });
+          chapters.push({
+            timestamp: formatTimestamp(currentTime),
+            title: i > 0
+              ? `${moveNumber}${color} ${moveNotation} - ${truncatedText}`
+              : `Starting Position - ${truncatedText}`,
+          });
+
+          lastChapterTime = currentTime;
+        }
 
         currentTime += SECONDS_PER_MOVE + ANNOTATION_PAUSE;
       } else if (i > 0) {
@@ -83,9 +91,9 @@ export function generateChapters(
     // For non-annotated videos, create chapters for game phases
     const totalMoves = moves.length;
 
-    if (totalMoves >= 10) {
-      // Opening (first 10 moves or 33% of game)
-      const openingEnd = Math.min(10, Math.ceil(totalMoves * 0.33));
+    if (totalMoves >= 15) {
+      // Opening (ensure at least 15 seconds / 15 moves)
+      const openingEnd = Math.max(15, Math.min(Math.ceil(totalMoves * 0.33), totalMoves));
 
       chapters.push({
         timestamp: formatTimestamp(currentTime),
@@ -93,35 +101,69 @@ export function generateChapters(
       });
       currentTime += openingEnd * SECONDS_PER_MOVE;
 
-      // Middlegame
+      // Middlegame (ensure at least 15 seconds / 15 moves)
       const middlegameEnd = Math.min(totalMoves, Math.ceil(totalMoves * 0.75));
-      if (middlegameEnd > openingEnd && (middlegameEnd - openingEnd) >= 10) {
+      if (middlegameEnd > openingEnd && (middlegameEnd - openingEnd) >= MIN_CHAPTER_LENGTH) {
         chapters.push({
           timestamp: formatTimestamp(currentTime),
           title: `Middlegame - Moves ${openingEnd + 1}-${middlegameEnd}`,
         });
         currentTime += (middlegameEnd - openingEnd) * SECONDS_PER_MOVE;
-      }
 
-      // Endgame
-      if (totalMoves > middlegameEnd && (totalMoves - middlegameEnd) >= 5) {
-        chapters.push({
-          timestamp: formatTimestamp(currentTime),
-          title: `Endgame - Moves ${middlegameEnd + 1}-${totalMoves}`,
-        });
-        currentTime += (totalMoves - middlegameEnd) * SECONDS_PER_MOVE;
+        // Endgame (ensure at least 15 seconds / 15 moves from last chapter)
+        if (totalMoves > middlegameEnd && (totalMoves - middlegameEnd) >= MIN_CHAPTER_LENGTH) {
+          chapters.push({
+            timestamp: formatTimestamp(currentTime),
+            title: `Endgame - Moves ${middlegameEnd + 1}-${totalMoves}`,
+          });
+          currentTime += (totalMoves - middlegameEnd) * SECONDS_PER_MOVE;
+        }
+      } else if (middlegameEnd > openingEnd) {
+        // If middlegame would be too short, just combine into one remaining chapter
+        if (totalMoves - openingEnd >= MIN_CHAPTER_LENGTH) {
+          chapters.push({
+            timestamp: formatTimestamp(currentTime),
+            title: `Moves ${openingEnd + 1}-${totalMoves}`,
+          });
+          currentTime += (totalMoves - openingEnd) * SECONDS_PER_MOVE;
+        }
       }
-
-      // Outro (always at least 10 seconds from last chapter)
-      chapters.push({
-        timestamp: formatTimestamp(currentTime),
-        title: 'Outro',
-      });
     }
   }
 
-  // Only return chapters if we have at least 3 (YouTube requirement)
-  return chapters.length >= 3 ? chapters : [];
+  // Only return chapters if:
+  // 1. We have at least 3 chapters (YouTube requirement)
+  // 2. Each chapter is at least 15 seconds apart
+  if (chapters.length < 3) {
+    return [];
+  }
+
+  // Validate that all chapters are at least 15 seconds apart
+  const validatedChapters: Chapter[] = [chapters[0]]; // Always include intro at 0:00
+
+  for (let i = 1; i < chapters.length; i++) {
+    const prevTime = parseTimestamp(validatedChapters[validatedChapters.length - 1].timestamp);
+    const currTime = parseTimestamp(chapters[i].timestamp);
+
+    if (currTime - prevTime >= MIN_CHAPTER_LENGTH) {
+      validatedChapters.push(chapters[i]);
+    }
+  }
+
+  return validatedChapters.length >= 3 ? validatedChapters : [];
+}
+
+/**
+ * Parse timestamp string to seconds
+ */
+function parseTimestamp(timestamp: string): number {
+  const parts = timestamp.split(':').map(Number);
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  } else if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  return 0;
 }
 
 /**
@@ -182,7 +224,7 @@ export function generateDescription(
   // - First chapter MUST start at 0:00
   // - Format: TIMESTAMP<space>Title (no extra characters)
   // - Must have at least 3 timestamps
-  // - Each chapter must be at least 10 seconds long
+  // - Each chapter must be at least 15 seconds long
   if (chapters.length >= 3 && chapters[0].timestamp === '0:00') {
     chapters.forEach(chapter => {
       lines.push(`${chapter.timestamp} ${chapter.title}`);
