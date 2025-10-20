@@ -16,6 +16,7 @@ import { getAnalysisById, createVideo, getAnnotationsByGameId } from "@/lib/db";
 import { Chess } from "chess.js";
 import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, CHESS_VIDEO_FPS, CHESS_SECONDS_PER_MOVE, ASPECT_RATIOS } from "../../../../types/constants";
 import { generateChapters, generateDescription } from "@/lib/youtube-metadata";
+import { auth } from "@clerk/nextjs/server";
 
 function extractGameInfo(pgn: string) {
   const whiteMatch = pgn.match(/\[White "([^"]+)"\]/);
@@ -64,6 +65,12 @@ export const POST = executeApi<
   { videoId: string; renderId: string; bucketName: string },
   typeof ChessRenderRequest
 >(ChessRenderRequest, async (req, body) => {
+  // Get authenticated user from Clerk
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+
   if (
     !process.env.AWS_ACCESS_KEY_ID &&
     !process.env.REMOTION_AWS_ACCESS_KEY_ID
@@ -162,7 +169,7 @@ export const POST = executeApi<
 
   // Create video record with render and YouTube metadata
   const video = await createVideo(
-    body.userId,
+    userId,
     body.gameId,
     body.compositionType || "walkthrough",
     {

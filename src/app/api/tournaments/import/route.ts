@@ -11,6 +11,7 @@ import {
   createPendingAnalysis,
   updateAnalysisResults,
 } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
 
 /**
  * POST /api/tournaments/import
@@ -21,13 +22,21 @@ import {
  * {
  *   pgnText: string;
  *   analyzeGames?: boolean; // Whether to analyze games that don't exist yet
- *   userId: string; // For tracking who created the tournament
  * }
  */
 export async function POST(request: NextRequest) {
   try {
+    // Get authenticated user from Clerk
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const { pgnText, analyzeGames = false, userId } = body;
+    const { pgnText, analyzeGames = false } = body;
 
     if (!pgnText || typeof pgnText !== 'string') {
       return NextResponse.json(

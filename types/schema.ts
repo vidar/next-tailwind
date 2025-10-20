@@ -29,7 +29,7 @@ export type ProgressResponse =
 // Chess game rendering schemas
 export const ChessRenderRequest = z.object({
   gameId: z.string().uuid(),
-  userId: z.string(),
+  userId: z.string().optional(), // Optional - will use Clerk auth if not provided
   compositionType: z.string().optional().default("walkthrough"),
   aspectRatio: z.enum(["landscape", "portrait"]).optional().default("landscape"),
 });

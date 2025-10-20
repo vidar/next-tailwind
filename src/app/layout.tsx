@@ -1,14 +1,14 @@
 import "../../styles/global.css";
 import { Metadata, Viewport } from "next";
 import Link from "next/link";
-// import {
-//   ClerkProvider,
-//   SignedIn,
-//   SignedOut,
-//   SignInButton,
-//   SignUpButton,
-//   UserButton,
-// } from "@clerk/nextjs";
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   title: "chessmoments.com",
@@ -27,9 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-background">
-        <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-50">
+    <ClerkProvider>
+      <html lang="en">
+        <body className="bg-background">
+          <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               {/* Logo and Brand */}
@@ -88,16 +89,16 @@ export default function RootLayout({
                 </Link>
               </nav>
 
-              {/* Auth Buttons - Disabled */}
-              {/* <div className="flex items-center gap-4">
+              {/* Auth Buttons */}
+              <div className="flex items-center gap-3 md:gap-4">
                 <SignedOut>
                   <SignInButton>
-                    <button className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors">
+                    <button className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors text-sm md:text-base">
                       Sign In
                     </button>
                   </SignInButton>
                   <SignUpButton>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm px-4 h-9 transition-colors">
+                    <button className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm px-3 md:px-4 h-9 transition-colors">
                       Sign Up
                     </button>
                   </SignUpButton>
@@ -105,12 +106,13 @@ export default function RootLayout({
                 <SignedIn>
                   <UserButton />
                 </SignedIn>
-              </div> */}
+              </div>
             </div>
           </div>
         </header>
         {children}
       </body>
     </html>
+    </ClerkProvider>
   );
 }

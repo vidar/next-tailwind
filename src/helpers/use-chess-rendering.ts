@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-// import { useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 
 export type ChessRenderState =
   | {
@@ -32,11 +32,8 @@ const wait = async (milliSeconds: number) => {
   });
 };
 
-// Hardcoded user ID for development
-const HARDCODED_USER_ID = "user_2a92fk0OwmLXTbHYgmo6yoE1f0q";
-
 export const useChessRendering = (gameId: string) => {
-  // const { user } = useUser();
+  const { user } = useUser();
   const [state, setState] = useState<ChessRenderState>({
     status: "init",
   });
@@ -45,14 +42,14 @@ export const useChessRendering = (gameId: string) => {
     compositionType: "walkthrough" | "annotated" = "walkthrough",
     aspectRatio: "landscape" | "portrait" = "landscape"
   ) => {
-    // if (!user) {
-    //   setState({
-    //     status: "error",
-    //     error: new Error("User not authenticated"),
-    //     videoId: null,
-    //   });
-    //   return;
-    // }
+    if (!user) {
+      setState({
+        status: "error",
+        error: new Error("User not authenticated"),
+        videoId: null,
+      });
+      return;
+    }
 
     setState({
       status: "invoking",
@@ -65,7 +62,6 @@ export const useChessRendering = (gameId: string) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           gameId,
-          userId: HARDCODED_USER_ID,
           compositionType,
           aspectRatio,
         }),
@@ -147,7 +143,7 @@ export const useChessRendering = (gameId: string) => {
         videoId: null,
       });
     }
-  }, [gameId]);
+  }, [gameId, user]);
 
   const undo = useCallback(() => {
     setState({ status: "init" });
