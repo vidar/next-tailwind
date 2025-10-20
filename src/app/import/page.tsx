@@ -110,7 +110,7 @@ export default function ImportPage() {
     setPlatform(historyItem.platform);
     // Trigger search after state is set
     setTimeout(() => {
-      const response = fetch(
+      fetch(
         `/api/chess/search?platform=${historyItem.platform}&username=${encodeURIComponent(historyItem.username)}`
       )
         .then((res) => {

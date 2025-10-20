@@ -1,4 +1,4 @@
-import { AwsRegion, RenderMediaOnLambdaOutput } from "@remotion/lambda/client";
+import { AwsRegion } from "@remotion/lambda/client";
 import {
   renderMediaOnLambda,
   speculateFunctionName,
@@ -13,8 +13,7 @@ import {
 import { ChessRenderRequest } from "../../../../types/schema";
 import { executeApi } from "../../../helpers/api-response";
 import { getAnalysisById, createVideo, getAnnotationsByGameId } from "@/lib/db";
-import { Chess } from "chess.js";
-import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, CHESS_VIDEO_FPS, CHESS_SECONDS_PER_MOVE, ASPECT_RATIOS } from "../../../../types/constants";
+import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, CHESS_VIDEO_FPS, ASPECT_RATIOS } from "../../../../types/constants";
 import { generateChapters, generateDescription } from "@/lib/youtube-metadata";
 import { auth } from "@clerk/nextjs/server";
 
@@ -30,35 +29,6 @@ function extractGameInfo(pgn: string) {
     result: resultMatch ? resultMatch[1] : "*",
     date: dateMatch ? dateMatch[1] : "Unknown",
   };
-}
-
-function calculateDuration(pgn: string, fps: number): number {
-  try {
-    const game = new Chess();
-    game.loadPgn(pgn);
-    const moves = game.history();
-    const INTRO_DURATION = 3; // 3 seconds intro
-    const OUTRO_DURATION = 3; // 3 seconds outro
-    const gameDuration = moves.length * CHESS_SECONDS_PER_MOVE;
-    return (INTRO_DURATION + gameDuration + OUTRO_DURATION) * fps;
-  } catch {
-    return 66 * fps; // Default to 66 seconds (60 + 3 intro + 3 outro)
-  }
-}
-
-function calculateAnnotatedDuration(pgn: string, annotationCount: number, fps: number): number {
-  try {
-    const game = new Chess();
-    game.loadPgn(pgn);
-    const moves = game.history();
-    const INTRO_DURATION = 3; // 3 seconds intro
-    const OUTRO_DURATION = 3; // 3 seconds outro
-    const baseDuration = moves.length * CHESS_SECONDS_PER_MOVE;
-    const annotationDuration = annotationCount * 4; // 4 seconds per annotation
-    return (INTRO_DURATION + baseDuration + annotationDuration + OUTRO_DURATION) * fps;
-  } catch {
-    return 66 * fps; // Default
-  }
 }
 
 export const POST = executeApi<
@@ -156,10 +126,12 @@ export const POST = executeApi<
     region: REGION as AwsRegion,
     serveUrl: SITE_NAME,
     composition: compositionId,
-    inputProps,
+    inputProps: {
+      ...inputProps,
+      width: dimensions.width,
+      height: dimensions.height,
+    },
     imageFormat: "jpeg",
-    width: dimensions.width,
-    height: dimensions.height,
     framesPerLambda: 100,
     downloadBehavior: {
       type: "download",

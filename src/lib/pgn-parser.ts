@@ -87,7 +87,7 @@ export function splitPGNGames(pgnText: string): string[] {
   // Split by empty line followed by [Event header
   const games: string[] = [];
   const gamePattern = /\[Event\s+"[^"]*"\]/g;
-  const matches = [...pgnText.matchAll(gamePattern)];
+  const matches = Array.from(pgnText.matchAll(gamePattern));
 
   if (matches.length === 0) {
     // Single game or no games

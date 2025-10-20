@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { pgnText, analyzeGames = false } = body;
+    const { pgnText } = body;
 
     if (!pgnText || typeof pgnText !== 'string') {
       return NextResponse.json(

@@ -3,8 +3,6 @@ import {
   AbsoluteFill,
   useCurrentFrame,
   useVideoConfig,
-  Img,
-  staticFile,
   Sequence,
   spring,
   interpolate,
@@ -19,7 +17,6 @@ import "chessground/assets/chessground.brown.css";
 import "chessground/assets/chessground.cburnett.css";
 import "./chessground-override.css";
 import { LogoIntro } from "./LogoIntro";
-import { LogoOutro } from "./LogoOutro";
 import { LogoOutroWithCTA } from "./LogoOutroWithCTA";
 
 // Extend ChessGameProps to include annotations

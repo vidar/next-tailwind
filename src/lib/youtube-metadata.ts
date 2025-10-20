@@ -196,7 +196,7 @@ export function generateHashtags(pgn: string, annotations: GameAnnotation[]): st
   if (annotationText.includes('brillian')) tags.push('brilliantmove');
 
   // Keep unique and limit to 15 hashtags
-  return [...new Set(tags)].slice(0, 15);
+  return Array.from(new Set(tags)).slice(0, 15);
 }
 
 /**

@@ -26,7 +26,7 @@ export default function AnalyzedGameDetailPage() {
   const id = params.id as string;
   const boardRef = useRef<HTMLDivElement>(null);
   const cgRef = useRef<Api | null>(null);
-  const moveRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const moveRefs = useRef<{ [key: number]: HTMLElement | null }>({});
 
   const [analysis, setAnalysis] = useState<ChessAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -588,10 +588,10 @@ export default function AnalyzedGameDetailPage() {
                 </select>
                 <button
                   onClick={() => renderMedia(compositionType, aspectRatio)}
-                  disabled={renderState.status === "invoking" || (compositionType === "annotated" && annotations.length === 0)}
+                  disabled={compositionType === "annotated" && annotations.length === 0}
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {renderState.status === "invoking" ? "Starting..." : "Render Video"}
+                  Render Video
                 </button>
               </>
             ) : null}
