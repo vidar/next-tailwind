@@ -36,6 +36,7 @@ export const ChessGameProps = z.object({
     date: z.string(),
   }),
   orientation: z.enum(["white", "black"]).optional().default("white"),
+  musicGenre: z.string().optional().default("none"),
 });
 
 export const ChessGameAnnotatedProps = ChessGameProps.extend({

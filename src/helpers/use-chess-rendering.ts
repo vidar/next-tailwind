@@ -41,7 +41,8 @@ export const useChessRendering = (gameId: string) => {
   const renderMedia = useCallback(async (
     compositionType: "walkthrough" | "annotated" = "walkthrough",
     aspectRatio: "landscape" | "portrait" = "landscape",
-    orientation: "white" | "black" = "white"
+    orientation: "white" | "black" = "white",
+    musicGenre: string = "none"
   ) => {
     if (!user) {
       setState({
@@ -66,6 +67,7 @@ export const useChessRendering = (gameId: string) => {
           compositionType,
           aspectRatio,
           orientation,
+          musicGenre,
         }),
       });
 

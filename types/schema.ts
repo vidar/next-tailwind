@@ -33,6 +33,7 @@ export const ChessRenderRequest = z.object({
   compositionType: z.string().optional().default("walkthrough"),
   aspectRatio: z.enum(["landscape", "portrait"]).optional().default("landscape"),
   orientation: z.enum(["white", "black"]).optional().default("white"),
+  musicGenre: z.string().optional().default("none"),
 });
 
 export const ChessProgressRequest = z.object({

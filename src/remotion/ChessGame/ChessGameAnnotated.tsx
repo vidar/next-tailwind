@@ -6,6 +6,8 @@ import {
   Sequence,
   spring,
   interpolate,
+  Audio,
+  staticFile,
 } from "remotion";
 import { ChessGameProps } from "../../../types/constants";
 import { Chess } from "chess.js";
@@ -18,6 +20,7 @@ import "chessground/assets/chessground.cburnett.css";
 import "./chessground-override.css";
 import { LogoIntro } from "./LogoIntro";
 import { LogoOutroWithCTA } from "./LogoOutroWithCTA";
+import { getMusicTrack } from "../../lib/music-config";
 
 // Extend ChessGameProps to include annotations
 export const ChessGameAnnotatedProps = ChessGameProps.extend({
@@ -473,8 +476,9 @@ export const ChessGameAnnotated = ({
   gameInfo,
   annotations,
   orientation = "white",
+  musicGenre = "none",
 }: z.infer<typeof ChessGameAnnotatedProps>) => {
-  const { fps } = useVideoConfig();
+  const { fps, durationInFrames } = useVideoConfig();
 
   // Calculate durations
   const INTRO_DURATION = fps * 3; // 3 seconds intro
@@ -502,8 +506,20 @@ export const ChessGameAnnotated = ({
 
   const GAME_DURATION = gameDuration;
 
+  // Get music track
+  const musicTrack = getMusicTrack(musicGenre);
+
   return (
     <AbsoluteFill>
+      {/* Background Music */}
+      {musicTrack && (
+        <Audio
+          src={staticFile(musicTrack.replace("/", ""))}
+          volume={0.3}
+          loop
+        />
+      )}
+
       {/* Intro */}
       <Sequence durationInFrames={INTRO_DURATION}>
         <LogoIntro />

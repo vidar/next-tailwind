@@ -7,6 +7,7 @@ import { Chessground } from "chessground";
 import { Chess } from "chess.js";
 import type { Api } from "chessground/api";
 import { useChessRendering } from "@/helpers/use-chess-rendering";
+import { RenderOptionsModal, type RenderOptions } from "@/components/RenderOptionsModal";
 
 interface ChessAnalysis {
   id: string;
@@ -52,13 +53,10 @@ export default function AnalyzedGameDetailPage() {
   const annotationBoardRef = useRef<HTMLDivElement>(null);
   const annotationCgRef = useRef<Api | null>(null);
 
-  // Composition type selection
-  const [compositionType, setCompositionType] = useState<"walkthrough" | "annotated">("walkthrough");
+  // Render options modal
+  const [showRenderModal, setShowRenderModal] = useState(false);
 
-  // Aspect ratio selection
-  const [aspectRatio, setAspectRatio] = useState<"landscape" | "portrait">("landscape");
-
-  // Board orientation
+  // Board orientation (for viewing only)
   const [boardOrientation, setBoardOrientation] = useState<"white" | "black">("white");
 
   // Chess rendering hook
@@ -445,6 +443,16 @@ export default function AnalyzedGameDetailPage() {
     return annotations.some((a) => a.move_index === moveIdx);
   };
 
+  const handleRenderVideo = (options: RenderOptions) => {
+    renderMedia(
+      options.compositionType,
+      options.aspectRatio,
+      options.orientation,
+      options.musicGenre
+    );
+    setShowRenderModal(false);
+  };
+
   const updateBoard = (game: Chess) => {
     if (cgRef.current) {
       const fen = game.fen();
@@ -576,43 +584,12 @@ export default function AnalyzedGameDetailPage() {
               Preview Video
             </Link>
             {renderState.status === "init" || renderState.status === "error" ? (
-              <>
-                <select
-                  value={compositionType}
-                  onChange={(e) => setCompositionType(e.target.value as "walkthrough" | "annotated")}
-                  disabled={compositionType === "annotated" && annotations.length === 0}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg font-medium transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
-                  title={compositionType === "annotated" && annotations.length === 0 ? "Add annotations first" : ""}
-                >
-                  <option value="walkthrough">Walkthrough</option>
-                  <option value="annotated" disabled={annotations.length === 0}>
-                    Annotated {annotations.length === 0 ? "(no annotations)" : `(${annotations.length})`}
-                  </option>
-                </select>
-                <select
-                  value={aspectRatio}
-                  onChange={(e) => setAspectRatio(e.target.value as "landscape" | "portrait")}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg font-medium transition-colors"
-                >
-                  <option value="landscape">Landscape (16:9)</option>
-                  <option value="portrait">Portrait (9:16)</option>
-                </select>
-                <select
-                  value={boardOrientation}
-                  onChange={(e) => setBoardOrientation(e.target.value as "white" | "black")}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg font-medium transition-colors"
-                >
-                  <option value="white">White's Perspective</option>
-                  <option value="black">Black's Perspective</option>
-                </select>
-                <button
-                  onClick={() => renderMedia(compositionType, aspectRatio, boardOrientation)}
-                  disabled={compositionType === "annotated" && annotations.length === 0}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  Render Video
-                </button>
-              </>
+              <button
+                onClick={() => setShowRenderModal(true)}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors"
+              >
+                Render Video
+              </button>
             ) : null}
             <Link
               href="/analyzed_games"
@@ -1098,6 +1075,14 @@ export default function AnalyzedGameDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Render Options Modal */}
+        <RenderOptionsModal
+          isOpen={showRenderModal}
+          onClose={() => setShowRenderModal(false)}
+          onRender={handleRenderVideo}
+          annotationsCount={annotations.length}
+        />
 
         {/* Annotation Modal */}
         {showAnnotationModal && (

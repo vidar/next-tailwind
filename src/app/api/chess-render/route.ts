@@ -71,12 +71,14 @@ export const POST = executeApi<
   const compositionType = body.compositionType || "walkthrough";
   const aspectRatio = body.aspectRatio || "landscape";
   const orientation = body.orientation || "white";
+  const musicGenre = body.musicGenre || "none";
 
   let inputProps: any = {
     pgn: analysis.pgn,
     analysisResults: analysis.analysis_results,
     gameInfo,
     orientation,
+    musicGenre,
   };
 
   let compositionId = CHESS_GAME_COMP_NAME;
