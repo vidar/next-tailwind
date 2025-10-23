@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { trackEvent } from "@/lib/posthog";
 
 type Platform = "chess.com" | "lichess" | "manual";
 type AnalysisDepth = 20 | 30 | 40;
@@ -88,6 +89,12 @@ export default function ImportPage() {
 
       const data = await response.json();
       setGames(data.games || []);
+
+      // Track successful game search
+      trackEvent('games_searched', {
+        platform,
+        games_found: data.games?.length || 0,
+      });
 
       // Add to search history (keep last 4, avoid duplicates)
       setSearchHistory((prev) => {
@@ -214,6 +221,13 @@ export default function ImportPage() {
           ...prev,
           `✓ Completed ${game.white} vs ${game.black}`,
         ]);
+
+        // Track successful analysis
+        trackEvent('game_analyzed', {
+          depth: analysisConfig.depth,
+          find_alternatives: analysisConfig.find_alternatives,
+        });
+
         console.log("Analysis result:", result);
       } catch (err) {
         setAnalysisProgress((prev) => [
