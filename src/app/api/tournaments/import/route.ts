@@ -10,6 +10,7 @@ import {
   getTournamentRoundByNumber,
   createPendingAnalysis,
   updateAnalysisResults,
+  type Tournament,
 } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
 
@@ -73,12 +74,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Start import process
-    const importResult = {
-      tournament: null as any,
+    const importResult: {
+      tournament: Tournament | null;
+      playersImported: number;
+      roundsCreated: number;
+      gamesLinked: number;
+      gamesToAnalyze: string[];
+      warnings: string[];
+      suggestions: string[];
+    } = {
+      tournament: null,
       playersImported: 0,
       roundsCreated: 0,
       gamesLinked: 0,
-      gamesToAnalyze: [] as string[],
+      gamesToAnalyze: [],
       warnings: validation.warnings,
       suggestions: validation.suggestions,
     };

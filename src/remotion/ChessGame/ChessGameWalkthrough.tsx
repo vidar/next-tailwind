@@ -28,8 +28,7 @@ const GameContent = ({
   analysisResults,
   gameInfo,
   orientation = "white",
-  introFrames,
-}: z.infer<typeof ChessGameProps> & { introFrames: number }) => {
+}: z.infer<typeof ChessGameProps> & { introFrames?: number }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -307,7 +306,7 @@ export const ChessGameWalkthrough = ({
   orientation = "white",
   musicGenre = "none",
 }: z.infer<typeof ChessGameProps>) => {
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   // Calculate durations
   const INTRO_DURATION = fps * 3; // 3 seconds intro
@@ -344,6 +343,7 @@ export const ChessGameWalkthrough = ({
           orientation={orientation}
           analysisResults={analysisResults}
           gameInfo={gameInfo}
+          musicGenre={musicGenre}
           introFrames={INTRO_DURATION}
         />
       </Sequence>

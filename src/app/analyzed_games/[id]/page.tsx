@@ -13,12 +13,21 @@ import { EvaluationChart } from "@/components/EvaluationChart";
 interface ChessAnalysis {
   id: string;
   pgn: string;
-  game_data: any;
+  game_data: Record<string, unknown>;
   analysis_config: {
     depth: number;
     find_alternatives: boolean;
   };
-  analysis_results: any;
+  analysis_results: {
+    moves?: Array<{
+      move?: string;
+      evaluation?: number;
+      eval?: number;
+      score?: number;
+      classification?: string;
+      best_move?: string;
+    }>;
+  } | null;
   status: string;
   completed_at: string | null;
 }
@@ -39,12 +48,20 @@ export default function AnalyzedGameDetailPage() {
   const [isGameInfoOpen, setIsGameInfoOpen] = useState(false);
   const [isPgnOpen, setIsPgnOpen] = useState(false);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
-  const [existingVideos, setExistingVideos] = useState<any[]>([]);
+  const [existingVideos, setExistingVideos] = useState<Array<{
+    id: string;
+    status: string;
+    s3_url: string;
+    composition_type: string;
+    created_at: string;
+    completed_at: string | null;
+    metadata?: { youtubeUrl?: string } | null;
+  }>>([]);
   const [uploadingVideoId, setUploadingVideoId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Annotation state
-  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [annotations, setAnnotations] = useState<Array<{ id: string; move_index: number; annotation_text: string }>>([]);
   const [showAnnotationModal, setShowAnnotationModal] = useState(false);
   const [annotationMoveIndex, setAnnotationMoveIndex] = useState<number | null>(null);
   const [annotationText, setAnnotationText] = useState("");
@@ -158,7 +175,7 @@ export default function AnalyzedGameDetailPage() {
       }
 
       const data = await response.json();
-      setExistingVideos(data.videos.filter((v: any) => v.status === "completed"));
+      setExistingVideos(data.videos.filter((v: { status: string }) => v.status === "completed"));
     } catch (err) {
       console.error("Failed to fetch videos:", err);
     }
@@ -1120,7 +1137,7 @@ export default function AnalyzedGameDetailPage() {
           isOpen={showRenderModal}
           onClose={() => setShowRenderModal(false)}
           onRender={handleRenderVideo}
-          annotationsCount={annotations.length}
+          hasAnnotations={annotations.length > 0}
         />
 
         {/* Annotation Modal */}

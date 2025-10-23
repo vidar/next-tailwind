@@ -12,8 +12,8 @@ import {
 } from "../../../../config.mjs";
 import { ChessRenderRequest } from "../../../../types/schema";
 import { executeApi } from "../../../helpers/api-response";
-import { getAnalysisById, createVideo, getAnnotationsByGameId } from "@/lib/db";
-import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, CHESS_VIDEO_FPS, ASPECT_RATIOS } from "../../../../types/constants";
+import { getAnalysisById, createVideo, getAnnotationsByGameId, type GameAnnotation } from "@/lib/db";
+import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, ASPECT_RATIOS } from "../../../../types/constants";
 import { generateChapters, generateDescription } from "@/lib/youtube-metadata";
 import { auth } from "@clerk/nextjs/server";
 
@@ -73,7 +73,7 @@ export const POST = executeApi<
   const orientation = body.orientation || "white";
   const musicGenre = body.musicGenre || "none";
 
-  let inputProps: any = {
+  const inputProps: Record<string, unknown> = {
     pgn: analysis.pgn,
     analysisResults: analysis.analysis_results,
     gameInfo,
@@ -82,7 +82,7 @@ export const POST = executeApi<
   };
 
   let compositionId = CHESS_GAME_COMP_NAME;
-  let annotations: any[] = [];
+  let annotations: GameAnnotation[] = [];
 
   if (compositionType === "annotated") {
     annotations = await getAnnotationsByGameId(body.gameId);
@@ -97,8 +97,7 @@ export const POST = executeApi<
   const chapters = generateChapters(
     analysis.pgn,
     annotations,
-    compositionType as any,
-    CHESS_VIDEO_FPS
+    compositionType as 'walkthrough' | 'annotated'
   );
 
   const description = generateDescription(

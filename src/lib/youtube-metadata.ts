@@ -30,8 +30,7 @@ function formatTimestamp(seconds: number): string {
 export function generateChapters(
   pgn: string,
   annotations: GameAnnotation[],
-  compositionType: 'walkthrough' | 'annotated' | 'arrows',
-  fps: number = 30
+  compositionType: 'walkthrough' | 'annotated' | 'arrows'
 ): Chapter[] {
   const chapters: Chapter[] = [];
   const game = new Chess();

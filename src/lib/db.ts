@@ -1,5 +1,8 @@
 import { Pool } from "pg";
 
+// Type for JSONB fields in PostgreSQL
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
 // Create a singleton pool instance
 let pool: Pool | null = null;
 
@@ -22,12 +25,12 @@ export function getPool(): Pool {
 export interface ChessAnalysis {
   id: string;
   pgn: string;
-  game_data: any;
+  game_data: JsonValue;
   analysis_config: {
     depth: number;
     find_alternatives: boolean;
   };
-  analysis_results: any;
+  analysis_results: JsonValue;
   status: string;
   progress: number | null;
   error_message: string | null;
@@ -76,8 +79,8 @@ export async function createPendingAnalysis(
 
 export async function updateAnalysisResults(
   id: string,
-  gameData: any,
-  analysisResults: any,
+  gameData: JsonValue,
+  analysisResults: JsonValue,
   status: 'completed' | 'failed',
   errorMessage?: string
 ): Promise<ChessAnalysis> {
@@ -90,7 +93,7 @@ export async function updateAnalysisResults(
     'progress = 100',
     'updated_at = CURRENT_TIMESTAMP'
   ];
-  const values: any[] = [id, JSON.stringify(gameData), JSON.stringify(analysisResults), status];
+  const values: (string | JsonValue)[] = [id, JSON.stringify(gameData), JSON.stringify(analysisResults), status];
   let paramCount = 4;
 
   if (status === 'completed') {
@@ -120,7 +123,7 @@ export interface Video {
   start_time: string;
   end_time: string | null;
   error: string | null;
-  metadata: any;
+  metadata: JsonValue;
   created_at: string;
   updated_at: string;
 }
@@ -149,7 +152,7 @@ export async function updateVideoStatus(
 ): Promise<Video> {
   const pool = getPool();
   const updates: string[] = ['status = $2', 'updated_at = CURRENT_TIMESTAMP'];
-  const values: any[] = [videoId, status];
+  const values: (string | Video['status'])[] = [videoId, status];
   let paramCount = 2;
 
   if (status === 'completed' || status === 'failed') {
@@ -208,7 +211,7 @@ export async function getVideosByUserId(userId: string): Promise<Video[]> {
 
 export async function updateVideoMetadata(
   videoId: string,
-  metadata: any
+  metadata: JsonValue
 ): Promise<Video> {
   const pool = getPool();
   const result = await pool.query(
@@ -289,7 +292,7 @@ export interface Tournament {
   country_code: string | null;
   organizer: string | null;
   description: string | null;
-  metadata: any;
+  metadata: JsonValue;
   created_at: string;
   updated_at: string;
 }
@@ -302,7 +305,7 @@ export interface Player {
   birth_year: number | null;
   profile_photo_url: string | null;
   fide_profile_url: string | null;
-  metadata: any;
+  metadata: JsonValue;
   created_at: string;
   updated_at: string;
 }
@@ -315,7 +318,7 @@ export interface TournamentPlayer {
   seed_number: number | null;
   final_score: number | null;
   final_rank: number | null;
-  metadata: any;
+  metadata: JsonValue;
   created_at: string;
   updated_at: string;
 }
@@ -339,7 +342,7 @@ export interface TournamentGame {
   board_number: number | null;
   result: '1-0' | '0-1' | '1/2-1/2' | '*';
   game_date: string | null;
-  metadata: any;
+  metadata: JsonValue;
   created_at: string;
   updated_at: string;
 }
@@ -356,7 +359,7 @@ export async function createTournament(data: {
   country_code?: string;
   organizer?: string;
   description?: string;
-  metadata?: any;
+  metadata?: JsonValue;
 }): Promise<Tournament> {
   const pool = getPool();
   const result = await pool.query(
@@ -397,7 +400,7 @@ export async function listTournaments(params?: {
 }): Promise<Tournament[]> {
   const pool = getPool();
   let query = 'SELECT * FROM tournaments WHERE 1=1';
-  const values: any[] = [];
+  const values: (string | number)[] = [];
   let paramCount = 0;
 
   if (params?.type) {
@@ -451,7 +454,7 @@ export async function upsertPlayer(data: {
   birth_year?: number;
   profile_photo_url?: string;
   fide_profile_url?: string;
-  metadata?: any;
+  metadata?: JsonValue;
 }): Promise<Player> {
   const pool = getPool();
   const result = await pool.query(
@@ -539,7 +542,7 @@ export async function updateTournamentPlayerScore(
   fideId: string,
   finalScore: number,
   finalRank?: number,
-  metadata?: any
+  metadata?: JsonValue
 ): Promise<TournamentPlayer> {
   const pool = getPool();
   const result = await pool.query(
@@ -606,7 +609,7 @@ export async function linkGameToTournament(
   result: TournamentGame['result'],
   boardNumber?: number,
   gameDate?: string,
-  metadata?: any
+  metadata?: JsonValue
 ): Promise<TournamentGame> {
   const pool = getPool();
   const resultData = await pool.query(

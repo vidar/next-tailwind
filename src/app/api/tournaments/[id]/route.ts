@@ -62,7 +62,10 @@ export async function GET(
  * Helper function to build crosstable data
  * Returns { result: string, gameId: string | null } for each matchup
  */
-function buildCrosstable(players: any[], games: any[]) {
+function buildCrosstable(
+  players: Array<{ fide_id: string }>,
+  games: Array<{ white_fide_id: string; black_fide_id: string; result: string; game_id: string }>
+) {
   const crosstable: { [key: string]: { [key: string]: { result: string; gameId: string | null } } } = {};
 
   // Initialize crosstable

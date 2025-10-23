@@ -24,19 +24,22 @@ export const POST = executeApi<
     throw new Error(`Video not found: ${body.videoId}`);
   }
 
-  if (!video.metadata?.renderId || !video.metadata?.bucketName) {
+  // Type guard for metadata
+  const metadata = video.metadata as { renderId?: string; bucketName?: string } | null;
+
+  if (!metadata?.renderId || !metadata?.bucketName) {
     throw new Error("Video render not started");
   }
 
   const renderProgress = await getRenderProgress({
-    bucketName: video.metadata.bucketName,
+    bucketName: metadata.bucketName,
     functionName: speculateFunctionName({
       diskSizeInMb: DISK,
       memorySizeInMb: RAM,
       timeoutInSeconds: TIMEOUT,
     }),
     region: REGION as AwsRegion,
-    renderId: video.metadata.renderId,
+    renderId: metadata.renderId,
   });
 
   if (renderProgress.fatalErrorEncountered) {

@@ -16,15 +16,17 @@ import {
 import { ChessGameWalkthrough } from "../../../remotion/ChessGame/ChessGameWalkthrough";
 import { Chess } from "chess.js";
 
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
 interface ChessAnalysis {
   id: string;
   pgn: string;
-  game_data: any;
+  game_data: JsonValue;
   analysis_config: {
     depth: number;
     find_alternatives: boolean;
   };
-  analysis_results: any;
+  analysis_results: JsonValue;
   status: string;
   completed_at: string | null;
 }
@@ -93,8 +95,10 @@ const ChessVideoPreview: NextPage = () => {
 
     return {
       pgn: analysis.pgn,
-      analysisResults: analysis.analysis_results,
+      analysisResults: analysis.analysis_results as { moves?: Array<{ move?: string; evaluation?: number; best_move?: string }> } | undefined,
       gameInfo,
+      orientation: "white" as const,
+      musicGenre: "none",
     };
   }, [analysis]);
 

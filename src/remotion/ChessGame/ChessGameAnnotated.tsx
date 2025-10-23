@@ -103,8 +103,7 @@ const GameContent = ({
   gameInfo,
   annotations,
   orientation = "white",
-  introFrames,
-}: z.infer<typeof ChessGameAnnotatedProps> & { introFrames: number }) => {
+}: z.infer<typeof ChessGameAnnotatedProps> & { introFrames?: number }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const boardRef = useRef<HTMLDivElement>(null);
@@ -478,7 +477,7 @@ export const ChessGameAnnotated = ({
   orientation = "white",
   musicGenre = "none",
 }: z.infer<typeof ChessGameAnnotatedProps>) => {
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   // Calculate durations
   const INTRO_DURATION = fps * 3; // 3 seconds intro
@@ -533,6 +532,7 @@ export const ChessGameAnnotated = ({
           gameInfo={gameInfo}
           annotations={annotations}
           orientation={orientation}
+          musicGenre={musicGenre}
           introFrames={INTRO_DURATION}
         />
       </Sequence>

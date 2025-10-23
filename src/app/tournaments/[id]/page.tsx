@@ -17,7 +17,7 @@ interface Tournament {
   country_code: string | null;
   organizer: string | null;
   description: string | null;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 interface Player {

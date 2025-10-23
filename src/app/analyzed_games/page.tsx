@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
 interface ChessAnalysis {
   id: string;
   pgn: string;
-  game_data: any;
+  game_data: JsonValue;
   analysis_config: {
     depth: number;
     find_alternatives: boolean;
   };
-  analysis_results: any;
+  analysis_results: JsonValue;
   status: string;
   progress: number | null;
   error_message: string | null;

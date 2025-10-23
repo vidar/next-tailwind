@@ -47,7 +47,7 @@ export function initPostHog() {
 }
 
 // Helper to identify users (call after user signs in)
-export function identifyUser(userId: string, userProperties?: Record<string, any>) {
+export function identifyUser(userId: string, userProperties?: Record<string, unknown>) {
   if (typeof window === 'undefined') return
   posthog.identify(userId, userProperties)
 }
@@ -59,13 +59,13 @@ export function resetUser() {
 }
 
 // Track custom events
-export function trackEvent(eventName: string, properties?: Record<string, any>) {
+export function trackEvent(eventName: string, properties?: Record<string, unknown>) {
   if (typeof window === 'undefined') return
   posthog.capture(eventName, properties)
 }
 
 // Track errors manually
-export function trackError(error: Error, context?: Record<string, any>) {
+export function trackError(error: Error, context?: Record<string, unknown>) {
   if (typeof window === 'undefined') return
 
   posthog.capture('error', {

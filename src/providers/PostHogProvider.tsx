@@ -1,19 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { initPostHog } from '@/lib/posthog'
 import { usePostHogUser } from '@/hooks/usePostHogUser'
 import posthog from 'posthog-js'
 
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
+function PostHogPageView() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  // Initialize PostHog on mount
-  useEffect(() => {
-    initPostHog()
-  }, [])
 
   // Track pageviews on route change
   useEffect(() => {
@@ -28,8 +23,24 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, searchParams])
 
+  return null
+}
+
+export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  // Initialize PostHog on mount
+  useEffect(() => {
+    initPostHog()
+  }, [])
+
   // Sync user with PostHog
   usePostHogUser()
 
-  return <>{children}</>
+  return (
+    <>
+      <Suspense fallback={null}>
+        <PostHogPageView />
+      </Suspense>
+      {children}
+    </>
+  )
 }

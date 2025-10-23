@@ -64,6 +64,8 @@ export const defaultChessGameProps: z.infer<typeof ChessGameProps> = {
     result: "1-0",
     date: "2025.10.09",
   },
+  orientation: "white",
+  musicGenre: "none",
 };
 
 export const defaultChessGameAnnotatedProps: z.infer<typeof ChessGameAnnotatedProps> = {

@@ -71,11 +71,17 @@ export async function POST(request: NextRequest) {
     const videoStream = Readable.from(videoBuffer);
 
     // Get game info and metadata from video
-    const gameInfo = video.metadata?.gameInfo || {};
+    const metadata = video.metadata as {
+      gameInfo?: { white?: string; black?: string; result?: string; date?: string };
+      description?: string;
+      hashtags?: string[];
+    } | null;
+
+    const gameInfo = metadata?.gameInfo || {};
     const title = `${gameInfo.white || "Player 1"} vs ${gameInfo.black || "Player 2"} - Chess Game Analysis`;
 
     // Use generated description with chapters, or fallback to simple description
-    const description = video.metadata?.description || `Chess game analysis and walkthrough.
+    const description = metadata?.description || `Chess game analysis and walkthrough.
 
 White: ${gameInfo.white || "Unknown"}
 Black: ${gameInfo.black || "Unknown"}
@@ -85,7 +91,7 @@ Date: ${gameInfo.date || "Unknown"}
 Generated with chessmoments.com`;
 
     // Extract hashtags from description or use defaults
-    const tags = video.metadata?.hashtags || ["chess", "chessanalysis", "chessgame", "chessstrategy"];
+    const tags = metadata?.hashtags || ["chess", "chessanalysis", "chessgame", "chessstrategy"];
 
     // Upload to YouTube
     console.log("Uploading to YouTube...");
@@ -114,13 +120,13 @@ Generated with chessmoments.com`;
 
     // Update video metadata with YouTube URL
     const updatedMetadata = {
-      ...video.metadata,
+      ...(typeof metadata === 'object' && metadata !== null ? metadata : {}),
       youtubeUrl,
-      youtubeVideoId,
+      youtubeVideoId: youtubeVideoId || null,
       uploadedAt: new Date().toISOString(),
     };
 
-    await updateVideoMetadata(videoId, updatedMetadata);
+    await updateVideoMetadata(videoId, updatedMetadata as unknown as { [key: string]: string | number | boolean | null });
 
     return NextResponse.json({
       success: true,
