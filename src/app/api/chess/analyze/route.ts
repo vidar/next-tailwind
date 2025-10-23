@@ -48,6 +48,12 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
+
+    // Log the raw analysis results from the external service
+    console.log("=== Analysis Results from Stockfish API ===");
+    console.log(JSON.stringify(data, null, 2));
+    console.log("=== End Analysis Results ===");
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("Analysis API error:", error);

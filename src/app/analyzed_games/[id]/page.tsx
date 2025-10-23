@@ -8,6 +8,7 @@ import { Chess } from "chess.js";
 import type { Api } from "chessground/api";
 import { useChessRendering } from "@/helpers/use-chess-rendering";
 import { RenderOptionsModal, type RenderOptions } from "@/components/RenderOptionsModal";
+import { EvaluationChart } from "@/components/EvaluationChart";
 
 interface ChessAnalysis {
   id: string;
@@ -728,6 +729,17 @@ export default function AnalyzedGameDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Chess Board */}
           <div className="lg:col-span-2">
+            {/* Evaluation Chart */}
+            {analysis.analysis_results?.moves && (
+              <div className="mb-4 md:mb-6">
+                <EvaluationChart
+                  moves={analysis.analysis_results.moves}
+                  currentMoveIndex={moveIndex}
+                  height={180}
+                />
+              </div>
+            )}
+
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 md:p-6">
               <div className="flex gap-2 md:gap-4 items-start">
                 {/* Evaluation Bar */}

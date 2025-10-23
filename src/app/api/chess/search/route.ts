@@ -56,6 +56,7 @@ interface LichessGame {
     };
   };
   winner?: "white" | "black";
+  pgn?: string;
 }
 
 async function fetchChessComGames(username: string): Promise<ChessGame[]> {
@@ -147,6 +148,7 @@ async function fetchLichessGames(username: string): Promise<ChessGame[]> {
         black: game.players.black.user.name,
         result,
         date: gameDate.toISOString().split("T")[0],
+        pgn: game.pgn,
       };
     });
   } catch (error) {
