@@ -444,6 +444,11 @@ export default function AnalyzedGameDetailPage() {
     return annotations.some((a) => a.move_index === moveIdx);
   };
 
+  const getAnnotation = (moveIdx: number): string | null => {
+    const annotation = annotations.find((a) => a.move_index === moveIdx);
+    return annotation?.annotation_text || null;
+  };
+
   const handleRenderVideo = (options: RenderOptions) => {
     renderMedia(
       options.compositionType,
@@ -823,16 +828,20 @@ export default function AnalyzedGameDetailPage() {
                   &gt;&gt;
                 </button>
               </div>
+            </div>
+          </div>
 
-              {/* Move List with Annotations */}
-              <div className="mt-4 md:mt-6">
+          {/* Sidebar - Move List & Game Info */}
+          <div className="space-y-4 md:space-y-6">
+            {/* Move List with Annotations - Hidden on mobile */}
+            <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-base md:text-lg font-semibold">Moves</h3>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {annotations.length} annotation{annotations.length !== 1 ? 's' : ''}
                   </span>
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 md:p-4 max-h-48 md:max-h-64 overflow-y-auto">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-h-[600px] overflow-y-auto">
                   <div className="space-y-1">
                     {/* Group moves by pairs (white and black) */}
                     {Array.from({ length: Math.ceil(moves.length / 2) }).map((_, pairIndex) => {
@@ -880,11 +889,12 @@ export default function AnalyzedGameDetailPage() {
                               ref={(el) => {
                                 moveRefs.current[whiteMoveNum] = el;
                               }}
-                              className={`flex-1 text-left px-1.5 md:px-2 py-1 rounded text-xs md:text-sm font-mono ${
+                              className={`flex-1 text-left px-1.5 md:px-2 py-1 rounded text-xs md:text-sm font-mono relative group ${
                                 moveIndex === whiteMoveNum
                                   ? "bg-blue-500 text-white"
                                   : "hover:bg-gray-200 dark:hover:bg-gray-600"
                               }`}
+                              title={whiteHasNote ? getAnnotation(whiteMoveNum) || undefined : undefined}
                             >
                               {whiteMove}
                               {whiteHasNote && <span className="ml-1">💬</span>}
@@ -900,6 +910,16 @@ export default function AnalyzedGameDetailPage() {
                                 }`}>
                                   {formatEval(whiteEval)}
                                 </span>
+                              )}
+                              {/* Custom tooltip */}
+                              {whiteHasNote && getAnnotation(whiteMoveNum) && (
+                                <div className="invisible group-hover:visible absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none">
+                                  <div className="whitespace-normal break-words">
+                                    {getAnnotation(whiteMoveNum)}
+                                  </div>
+                                  {/* Tooltip arrow */}
+                                  <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                                </div>
                               )}
                             </button>
                             <button
@@ -945,11 +965,12 @@ export default function AnalyzedGameDetailPage() {
                                 ref={(el) => {
                                   moveRefs.current[blackMoveNum] = el;
                                 }}
-                                className={`flex-1 text-left px-1.5 md:px-2 py-1 rounded text-xs md:text-sm font-mono ${
+                                className={`flex-1 text-left px-1.5 md:px-2 py-1 rounded text-xs md:text-sm font-mono relative group ${
                                   moveIndex === blackMoveNum
                                     ? "bg-blue-500 text-white"
                                     : "hover:bg-gray-200 dark:hover:bg-gray-600"
                                 }`}
+                                title={blackHasNote ? getAnnotation(blackMoveNum) || undefined : undefined}
                               >
                                 {blackMove}
                                 {blackHasNote && <span className="ml-1">💬</span>}
@@ -965,6 +986,16 @@ export default function AnalyzedGameDetailPage() {
                                   }`}>
                                     {formatEval(blackEval)}
                                   </span>
+                                )}
+                                {/* Custom tooltip */}
+                                {blackHasNote && getAnnotation(blackMoveNum) && (
+                                  <div className="invisible group-hover:visible absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg z-50 pointer-events-none">
+                                    <div className="whitespace-normal break-words">
+                                      {getAnnotation(blackMoveNum)}
+                                    </div>
+                                    {/* Tooltip arrow */}
+                                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                                  </div>
                                 )}
                               </button>
                               <button
@@ -1008,11 +1039,7 @@ export default function AnalyzedGameDetailPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Game Info & Analysis */}
-          <div className="space-y-4 md:space-y-6">
             {/* Game Info */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
               <button
