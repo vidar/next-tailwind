@@ -706,3 +706,127 @@ export async function calculateTournamentStandings(tournamentId: string): Promis
     [tournamentId]
   );
 }
+
+// ===== Tournament Videos =====
+
+export interface TournamentVideo {
+  id: string;
+  user_id: string;
+  tournament_id: string;
+  video_type: 'tournament_overview' | 'round_overview' | 'player_overview';
+  round_id: string | null;
+  player_fide_id: string | null;
+  composition_type: string;
+  status: 'pending' | 'generating_script' | 'rendering' | 'completed' | 'failed';
+  s3_url: string | null;
+  ai_script: JsonValue;
+  selected_game_id: string | null;
+  start_time: string;
+  end_time: string | null;
+  error: string | null;
+  metadata: JsonValue;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createTournamentVideo(
+  userId: string,
+  tournamentId: string,
+  videoType: TournamentVideo['video_type'],
+  options?: {
+    roundId?: string;
+    playerFideId?: string;
+    compositionType?: string;
+  }
+): Promise<TournamentVideo> {
+  const pool = getPool();
+  const result = await pool.query(
+    `INSERT INTO tournament_videos (user_id, tournament_id, video_type, round_id, player_fide_id, composition_type, status)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+     RETURNING *`,
+    [
+      userId,
+      tournamentId,
+      videoType,
+      options?.roundId || null,
+      options?.playerFideId || null,
+      options?.compositionType || videoType,
+    ]
+  );
+  return result.rows[0];
+}
+
+export async function getTournamentVideo(videoId: string): Promise<TournamentVideo | null> {
+  const pool = getPool();
+  const result = await pool.query(
+    `SELECT * FROM tournament_videos WHERE id = $1`,
+    [videoId]
+  );
+  return result.rows[0] || null;
+}
+
+export async function getTournamentVideos(tournamentId: string): Promise<TournamentVideo[]> {
+  const pool = getPool();
+  const result = await pool.query(
+    `SELECT * FROM tournament_videos WHERE tournament_id = $1 ORDER BY created_at DESC`,
+    [tournamentId]
+  );
+  return result.rows;
+}
+
+export async function updateTournamentVideoStatus(
+  videoId: string,
+  status: TournamentVideo['status'],
+  updates?: {
+    s3Url?: string;
+    error?: string;
+    aiScript?: JsonValue;
+    selectedGameId?: string;
+    metadata?: JsonValue;
+  }
+): Promise<TournamentVideo> {
+  const pool = getPool();
+  const updateFields: string[] = ['status = $2', 'updated_at = CURRENT_TIMESTAMP'];
+  const values: unknown[] = [videoId, status];
+  let paramCount = 2;
+
+  if (status === 'completed' || status === 'failed') {
+    updateFields.push('end_time = CURRENT_TIMESTAMP');
+  }
+
+  if (updates?.s3Url) {
+    paramCount++;
+    updateFields.push(`s3_url = $${paramCount}`);
+    values.push(updates.s3Url);
+  }
+
+  if (updates?.error) {
+    paramCount++;
+    updateFields.push(`error = $${paramCount}`);
+    values.push(updates.error);
+  }
+
+  if (updates?.aiScript) {
+    paramCount++;
+    updateFields.push(`ai_script = $${paramCount}`);
+    values.push(JSON.stringify(updates.aiScript));
+  }
+
+  if (updates?.selectedGameId) {
+    paramCount++;
+    updateFields.push(`selected_game_id = $${paramCount}`);
+    values.push(updates.selectedGameId);
+  }
+
+  if (updates?.metadata) {
+    paramCount++;
+    updateFields.push(`metadata = $${paramCount}`);
+    values.push(JSON.stringify(updates.metadata));
+  }
+
+  const result = await pool.query(
+    `UPDATE tournament_videos SET ${updateFields.join(', ')} WHERE id = $1 RETURNING *`,
+    values
+  );
+  return result.rows[0];
+}

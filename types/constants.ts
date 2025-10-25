@@ -95,3 +95,71 @@ export const ASPECT_RATIOS = {
 // Default dimensions (landscape for YouTube chapters support)
 export const CHESS_VIDEO_WIDTH = ASPECT_RATIOS.landscape.width;
 export const CHESS_VIDEO_HEIGHT = ASPECT_RATIOS.landscape.height;
+
+// Tournament video compositions
+export const TOURNAMENT_OVERVIEW_COMP_NAME = 'TournamentOverview';
+export const ROUND_OVERVIEW_COMP_NAME = 'RoundOverview';
+export const PLAYER_OVERVIEW_COMP_NAME = 'PlayerOverview';
+
+export const defaultTournamentOverviewProps = {
+  title: "An Epic Chess Battle",
+  summary: "This tournament brought together some of the world's best players for an exciting competition.",
+  highlights: [
+    "Dramatic upsets on the top boards",
+    "Brilliant tactical combinations",
+    "Nail-biting endgames",
+  ],
+  roundSummaries: [
+    "Round 1: Opening battles set the tone",
+    "Round 2: The favorites strike back",
+    "Round 3: Unexpected draws shake up the standings",
+  ],
+  conclusion: "A tournament that will be remembered for years to come!",
+  tournamentName: "Sample Chess Tournament 2025",
+  location: "New York, USA",
+  dates: "Jan 10-15, 2025",
+  topPlayers: [
+    { rank: 1, name: "Magnus Carlsen", score: 7.5, rating: 2830 },
+    { rank: 2, name: "Fabiano Caruana", score: 7.0, rating: 2800 },
+    { rank: 3, name: "Hikaru Nakamura", score: 6.5, rating: 2790 },
+  ],
+};
+
+export const defaultRoundOverviewProps = {
+  title: "Round 5: The Turning Point",
+  summary: "Round 5 proved to be decisive with several top contenders facing off in critical matches.",
+  gameHighlights: [
+    { gameId: "demo-game-1", description: "Board 1 saw a dramatic tactical battle" },
+    { gameId: "demo-game-2", description: "An upset on Board 2 shook up the standings" },
+  ],
+  standingsNarrative: "After this round, the leaders pulled ahead while several players fell behind.",
+  tournamentName: "Sample Chess Tournament 2025",
+  roundNumber: 5,
+  roundDate: "Jan 14, 2025",
+  location: "New York, USA",
+  topPlayers: [
+    { rank: 1, name: "Magnus Carlsen", score: 4.5, rating: 2830 },
+    { rank: 2, name: "Fabiano Caruana", score: 4.0, rating: 2800 },
+    { rank: 3, name: "Hikaru Nakamura", score: 3.5, rating: 2790 },
+  ],
+};
+
+export const defaultPlayerOverviewProps = {
+  title: "Magnus Carlsen's Dominant Performance",
+  introduction: "The World Champion entered the tournament as the top seed and demonstrated why he holds that position.",
+  performanceSummary: "With a score of 7.5/9, Carlsen showed consistent play throughout, mixing solid positional understanding with tactical precision.",
+  bestGame: {
+    gameId: "demo-game-1",
+    description: "Round 7 against Caruana showcased brilliant endgame technique",
+  },
+  disappointingGames: [
+    { gameId: "demo-game-2", description: "Round 3 draw in a better position" },
+  ],
+  conclusion: "Another strong tournament result cementing his status as the world's best.",
+  playerName: "Magnus Carlsen",
+  playerTitle: "GM",
+  playerRating: 2830,
+  tournamentName: "Sample Chess Tournament 2025",
+  finalScore: 7.5,
+  finalRank: 1,
+};

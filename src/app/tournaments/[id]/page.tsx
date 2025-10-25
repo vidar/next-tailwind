@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import StandingsTable from '@/components/tournament/StandingsTable';
 import Crosstable from '@/components/tournament/Crosstable';
+import TournamentVideoControls from '@/components/tournament/TournamentVideoControls';
 
 interface Tournament {
   id: string;
@@ -239,6 +240,13 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
       </div>
+
+      {/* Tournament Video Generation Controls */}
+      <TournamentVideoControls
+        tournamentId={resolvedParams.id}
+        rounds={rounds}
+        players={players}
+      />
 
       {/* View Mode Tabs */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6">

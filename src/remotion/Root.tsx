@@ -17,10 +17,19 @@ import {
   CHESS_SECONDS_PER_MOVE,
   ChessGameProps,
   ChessGameAnnotatedProps,
+  TOURNAMENT_OVERVIEW_COMP_NAME,
+  ROUND_OVERVIEW_COMP_NAME,
+  PLAYER_OVERVIEW_COMP_NAME,
+  defaultTournamentOverviewProps,
+  defaultRoundOverviewProps,
+  defaultPlayerOverviewProps,
 } from "../../types/constants";
 import { NextLogo } from "./MyComp/NextLogo";
 import { ChessGameWalkthrough } from "./ChessGame/ChessGameWalkthrough";
 import { ChessGameAnnotated } from "./ChessGame/ChessGameAnnotated";
+import { TournamentOverview, TournamentOverviewProps } from "./TournamentVideo/TournamentOverview";
+import { RoundOverview, RoundOverviewProps } from "./TournamentVideo/RoundOverview";
+import { PlayerOverview, PlayerOverviewProps } from "./TournamentVideo/PlayerOverview";
 import { Chess } from "chess.js";
 
 // Calculate duration based on number of moves in PGN
@@ -134,6 +143,42 @@ export const RemotionRoot: React.FC = () => {
             props,
           };
         }}
+      />
+
+      {/* Tournament overview composition */}
+      <Composition
+        id={TOURNAMENT_OVERVIEW_COMP_NAME}
+        component={TournamentOverview}
+        durationInFrames={CHESS_VIDEO_FPS * 120} // Default 2 minutes
+        fps={CHESS_VIDEO_FPS}
+        width={CHESS_VIDEO_WIDTH}
+        height={CHESS_VIDEO_HEIGHT}
+        defaultProps={defaultTournamentOverviewProps}
+        schema={TournamentOverviewProps}
+      />
+
+      {/* Round overview composition */}
+      <Composition
+        id={ROUND_OVERVIEW_COMP_NAME}
+        component={RoundOverview}
+        durationInFrames={CHESS_VIDEO_FPS * 90} // Default 1.5 minutes
+        fps={CHESS_VIDEO_FPS}
+        width={CHESS_VIDEO_WIDTH}
+        height={CHESS_VIDEO_HEIGHT}
+        defaultProps={defaultRoundOverviewProps}
+        schema={RoundOverviewProps}
+      />
+
+      {/* Player overview composition */}
+      <Composition
+        id={PLAYER_OVERVIEW_COMP_NAME}
+        component={PlayerOverview}
+        durationInFrames={CHESS_VIDEO_FPS * 100} // Default ~1.7 minutes
+        fps={CHESS_VIDEO_FPS}
+        width={CHESS_VIDEO_WIDTH}
+        height={CHESS_VIDEO_HEIGHT}
+        defaultProps={defaultPlayerOverviewProps}
+        schema={PlayerOverviewProps}
       />
     </>
   );
