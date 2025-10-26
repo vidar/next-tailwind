@@ -1,0 +1,66 @@
+sequenceDiagram
+    actor User
+    participant UI as TournamentVideoControls
+    participant API as /api/videos/generate
+    participant DB as PostgreSQL
+    participant AI as OpenRouter API
+    participant Lambda as AWS Lambda/Remotion
+    participant S3 as AWS S3
+    participant Poll as /api/videos/progress
+    participant YT as YouTube API
+
+    User->>UI: Click "Generate Round Overview"
+    UI->>API: POST { tournamentId, videoType, roundId }
+
+    API->>DB: createTournamentVideo()
+    DB-->>API: videoId
+    API->>API: Start async generateVideoScript()
+    API-->>UI: { videoId, status: 'generating_script' }
+    UI->>UI: Start 5s polling timer
+
+    Note over API,AI: Background Process
+    API->>DB: Fetch tournament, round, games, players
+    DB-->>API: Data
+    API->>AI: generateRoundOverview(context)
+    AI-->>API: { title, summary, gameHighlights, ... }
+    API->>API: selectMostInterestingGame()
+    API->>DB: Save AI script & selected game
+
+    API->>Lambda: renderMediaOnLambda(RoundOverview, inputProps)
+    Lambda->>Lambda: Render frames in parallel
+    Lambda->>S3: Upload MP4
+    S3-->>Lambda: S3 URL
+    Lambda-->>API: { renderId, bucketName }
+    API->>DB: Save metadata: { renderId, bucketName }
+
+    Note over UI,Poll: Polling Loop (every 5s)
+    loop Every 5 seconds
+        UI->>Poll: POST { videoId }
+        Poll->>DB: getTournamentVideo(videoId)
+        DB-->>Poll: video with metadata
+        Poll->>Lambda: getRenderProgress(renderId)
+        Lambda-->>Poll: { done: false, progress: 0.45 }
+        Poll-->>UI: { type: 'progress', progress: 45% }
+        UI->>UI: Update progress bar
+    end
+
+    Lambda->>Lambda: Rendering completes
+    UI->>Poll: POST { videoId }
+    Poll->>Lambda: getRenderProgress(renderId)
+    Lambda-->>Poll: { done: true, outputFile: S3_URL }
+    Poll->>DB: Update s3_url, status='completed'
+    Poll-->>UI: { type: 'done', url: S3_URL }
+    UI->>UI: Move to completedVideos[]
+    UI->>UI: Show Download & Upload buttons
+
+    User->>UI: Click "Upload to YouTube"
+    UI->>YT: POST /videos/youtube-upload { videoId }
+    YT->>DB: getTournamentVideo(videoId)
+    DB-->>YT: video with s3_url
+    YT->>S3: Download MP4
+    S3-->>YT: Video buffer
+    YT->>YT: Prepare title/description from AI script
+    YT->>YT: google.youtube.videos.insert()
+    YT-->>UI: { youtubeUrl, youtubeVideoId }
+    UI->>DB: Update metadata with YouTube URL
+    UI->>UI: Change button to "View on YouTube"

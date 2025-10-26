@@ -1,0 +1,46 @@
+stateDiagram-v2
+    [*] --> pending: createTournamentVideo()
+
+    pending --> generating_script: generateVideoScript() starts
+
+    generating_script --> generating_script: Calling OpenRouter API
+    generating_script --> rendering: AI script saved, Lambda triggered
+    generating_script --> failed: AI generation error
+
+    rendering --> rendering: Lambda rendering (0-100%)
+    rendering --> completed: Video uploaded to S3, s3_url saved
+    rendering --> failed: Lambda render error
+
+    completed --> completed: YouTube upload (metadata updated)
+
+    failed --> [*]
+    completed --> [*]
+
+    note right of pending
+        DB: status='pending'
+        No AI script yet
+    end note
+
+    note right of generating_script
+        DB: status='generating_script'
+        Calling OpenRouter
+        Selecting featured game
+    end note
+
+    note right of rendering
+        DB: status='rendering'
+        metadata: { renderId, bucketName }
+        Lambda processing
+    end note
+
+    note right of completed
+        DB: status='completed'
+        s3_url: S3 video URL
+        metadata: { renderId, bucketName,
+                    youtubeUrl (optional) }
+    end note
+
+    note right of failed
+        DB: status='failed'
+        error: Error message
+    end note

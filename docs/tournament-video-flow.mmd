@@ -1,0 +1,122 @@
+graph TB
+    Start([User clicks Generate Round Overview]) --> SelectRound[User selects round from dropdown]
+    SelectRound --> PostGenerate[POST /api/tournaments/videos/generate<br/>tournamentId, videoType: round_overview, roundId]
+
+    PostGenerate --> Auth{Authenticate<br/>with Clerk}
+    Auth -->|Unauthorized| Error401[Return 401 Error]
+    Auth -->|Success| FetchData[Fetch from Database:<br/>- Tournament info<br/>- Round info<br/>- Players<br/>- Games for round]
+
+    FetchData --> CreateRecord[createTournamentVideo<br/>status: pending<br/>Returns videoId]
+    CreateRecord --> StartAsync[Start async generateVideoScript]
+    StartAsync --> ReturnImmediate[Return to browser:<br/>videoId, status: generating_script]
+
+    ReturnImmediate --> UpdateUI[Update Component State:<br/>activeVideos.push<br/>Start 5-second polling]
+
+    subgraph Background["Background Process: generateVideoScript()"]
+        UpdateStatus1[Update DB:<br/>status = generating_script]
+        UpdateStatus1 --> CallAI[Call generateRoundOverview<br/>tournament-ai.ts]
+
+        CallAI --> OpenRouter[OpenRouter API Call<br/>Model: gpt-4o-mini<br/>Prompt: Create narrative for Round X]
+        OpenRouter --> AIResponse{AI Response}
+        AIResponse -->|Success| ParseJSON[Parse JSON Response:<br/>title, summary,<br/>gameHighlights,<br/>standingsNarrative]
+        AIResponse -->|Error| Fallback[Use fallback data]
+
+        ParseJSON --> SelectGame[selectMostInterestingGame<br/>Score games by rating,<br/>result, board number]
+        Fallback --> SelectGame
+
+        SelectGame --> SaveScript[updateTournamentVideoStatus<br/>aiScript: AI content,<br/>selectedGameId: gameId]
+
+        SaveScript --> TriggerLambda[triggerLambdaRender<br/>videoType: round_overview]
+    end
+
+    subgraph Lambda["triggerLambdaRender() Function"]
+        PrepareProps[Prepare inputProps:<br/>- AI script data<br/>- Tournament info<br/>- Round number/date<br/>- Top 8 players<br/>- Featured game PGN]
+
+        PrepareProps --> SetComp[composition = RoundOverview<br/>fileName = round-X-tournament.mp4]
+
+        SetComp --> CallRemotionLambda[renderMediaOnLambda:<br/>- region: us-east-1<br/>- codec: h264<br/>- 1920x1080<br/>- framesPerLambda: 100]
+
+        CallRemotionLambda --> LambdaResponse[Returns:<br/>renderId, bucketName]
+
+        LambdaResponse --> UpdateMetadata[updateTournamentVideoStatus<br/>status: rendering<br/>metadata: renderId, bucketName]
+    end
+
+    subgraph AWSLambda["AWS Lambda - Remotion Rendering"]
+        LoadComp[Load RoundOverview.tsx<br/>composition]
+        LoadComp --> RenderSequence[Render Sequence:<br/>1. LogoIntro 3s<br/>2. Title slide 5s<br/>3. Summary 8s<br/>4. Game highlights 10s<br/>5. Standings 8s<br/>6. Standings narrative 5s<br/>7. Featured game intro 3s<br/>8. Chess game 60s<br/>9. Outro 3s]
+
+        RenderSequence --> ParallelRender[Parallel rendering across<br/>multiple Lambda instances<br/>~100 frames each]
+
+        ParallelRender --> CombineFrames[Combine frames to MP4]
+        CombineFrames --> UploadS3[Upload to S3:<br/>round-X-tournament.mp4]
+        UploadS3 --> S3URL[Returns S3 URL]
+    end
+
+    subgraph Polling["Progress Polling - Every 5 Seconds"]
+        PollStart[useEffect timer triggers]
+        PollStart --> PostProgress[POST /api/tournaments/videos/progress<br/>Body: videoId]
+
+        PostProgress --> FetchVideo[Fetch video from DB<br/>Get renderId & bucketName<br/>from metadata]
+
+        FetchVideo --> GetProgress[getRenderProgress<br/>from Remotion SDK]
+
+        GetProgress --> CheckStatus{Check Status}
+
+        CheckStatus -->|Error| ReturnError[Return: type: error<br/>Update DB: status = failed]
+        CheckStatus -->|In Progress| ReturnProgress[Return: type: progress<br/>progress: 0-1]
+        CheckStatus -->|Done| SaveS3[Update DB:<br/>s3_url = outputFile<br/>status = completed]
+
+        SaveS3 --> ReturnDone[Return: type: done<br/>url, size]
+
+        ReturnError --> UpdateUIError[Update UI:<br/>Show error status]
+        ReturnProgress --> UpdateUIProgress[Update UI:<br/>Progress bar 0-100%]
+        ReturnDone --> MoveCompleted[Move to completedVideos<br/>Store S3 URL]
+    end
+
+    subgraph Completed["Video Completion - User Actions"]
+        ShowCompleted[Display in Completed Videos:<br/>✅ Round Overview<br/>ID: 1a2b3c4d...]
+
+        ShowCompleted --> Actions{User Action}
+
+        Actions -->|Download| OpenS3[Open S3 URL<br/>in new tab<br/>Direct download]
+
+        Actions -->|Upload to YouTube| YouTubeAPI[POST /api/tournaments/videos/youtube-upload]
+
+        YouTubeAPI --> CheckCreds{YouTube<br/>credentials<br/>configured?}
+        CheckCreds -->|No| CredsError[Return error:<br/>Credentials not configured]
+        CheckCreds -->|Yes| DownloadS3[Download video<br/>from S3 URL]
+
+        DownloadS3 --> PrepareMetadata[Prepare YouTube metadata:<br/>- Title: Tournament - Round X<br/>- Description: AI summary<br/>- Tags: chess, tournament<br/>- Privacy: unlisted]
+
+        PrepareMetadata --> UploadYT[Upload to YouTube API<br/>google.youtube.videos.insert]
+
+        UploadYT --> YTResponse[Returns:<br/>youtubeUrl, youtubeVideoId]
+
+        YTResponse --> SaveYTURL[Update DB metadata:<br/>youtubeUrl, youtubeVideoId,<br/>uploadedAt]
+
+        SaveYTURL --> UpdateButton[Update UI:<br/>Button changes to<br/>▶️ View on YouTube]
+    end
+
+    subgraph Database["Database Operations - tournament_videos table"]
+        DBOps[Key Operations:<br/>createTournamentVideo<br/>updateTournamentVideoStatus<br/>getTournamentVideo<br/>getTournamentVideos]
+
+        DBSchema[Schema:<br/>id, user_id, tournament_id<br/>video_type, round_id<br/>status, s3_url<br/>ai_script JSONB<br/>selected_game_id<br/>metadata JSONB<br/>start_time, end_time, error]
+    end
+
+    UpdateUI -.->|Every 5s| Polling
+    TriggerLambda -.->|Async| AWSLambda
+    S3URL -.->|Progress updates| Polling
+    MoveCompleted --> ShowCompleted
+
+    style Start fill:#e1f5ff
+    style ReturnImmediate fill:#c8e6c9
+    style UpdateUI fill:#fff9c4
+    style Background fill:#f3e5f5
+    style Lambda fill:#e1bee7
+    style AWSLambda fill:#ffccbc
+    style Polling fill:#b2dfdb
+    style Completed fill:#c5e1a5
+    style Database fill:#cfd8dc
+    style OpenRouter fill:#ffe0b2
+    style S3URL fill:#90caf9
+    style UpdateButton fill:#a5d6a7
