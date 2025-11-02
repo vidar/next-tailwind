@@ -77,6 +77,34 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Player Lookup Feature Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <Link href="/player-lookup" className="block">
+          <div className="bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl p-12 text-center hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-[1.02] shadow-xl">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              NEW: Player Lookup & Analysis
+            </h2>
+            <p className="text-xl text-green-100 mb-6 max-w-3xl mx-auto">
+              Search any Chess.com or Lichess player. Import their games. Get detailed insights on accuracy,
+              surprising results, and opening performance. All powered by Stockfish analysis.
+            </p>
+            <div className="inline-flex items-center gap-2 text-white font-semibold text-lg">
+              <span>Analyze Any Player</span>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </Link>
+      </div>
+
       {/* How It Works Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-4xl font-bold text-white text-center mb-12">How It Works</h2>
