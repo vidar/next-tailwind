@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         renderId: result.renderId,
         bucketName: result.bucketName,
-      } as Record<string, unknown>,
+      },
     });
 
     return NextResponse.json({

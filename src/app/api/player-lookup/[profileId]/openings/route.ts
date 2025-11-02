@@ -5,8 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getPlayerOpeningStats } from '@/lib/db';
 import {
-  getPlayerOpeningStats,
   getBestOpenings,
   getWorstOpenings,
   getOpeningRepertoire,
@@ -15,10 +15,10 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { profileId: string } }
+  { params }: { params: Promise<{ profileId: string }> }
 ) {
   try {
-    const profileId = params.profileId;
+    const { profileId } = await params;
     const { searchParams } = new URL(request.url);
 
     const view = searchParams.get('view') || 'summary';

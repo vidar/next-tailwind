@@ -73,23 +73,6 @@ async function callOpenRouter(
 }
 
 /**
- * Search for information about players using WebSearch
- */
-async function searchPlayerInfo(playerName: string, fideId: string): Promise<string> {
-  try {
-    // Search for player information
-    const searchQuery = `chess player ${playerName} FIDE ${fideId} achievements recent games`;
-
-    // Note: In a real implementation, you'd use the WebSearch API here
-    // For now, we'll return a placeholder that the AI can work with
-    return `Information about ${playerName} (FIDE: ${fideId})`;
-  } catch (error) {
-    console.error('Error searching player info:', error);
-    return `${playerName} (FIDE: ${fideId})`;
-  }
-}
-
-/**
  * Generate tournament overview narrative
  */
 export async function generateTournamentOverview(context: TournamentContext): Promise<{
@@ -167,7 +150,7 @@ Format your response as JSON:
     title: `${tournament.name} Overview`,
     summary: `The ${tournament.name} brought together ${players.length} players in ${tournament.location || 'a prestigious venue'}.`,
     highlights: ['Exciting games throughout', 'Strong competition', 'Memorable moments'],
-    roundSummaries: rounds.map((r, i) => `Round ${r.round_number}: Competitive games played`),
+    roundSummaries: rounds.map((r) => `Round ${r.round_number}: Competitive games played`),
     conclusion: 'A tournament to remember!',
   };
 }
@@ -184,13 +167,6 @@ export async function generateRoundOverview(context: RoundContext): Promise<{
   const { tournament, round, roundGames, players } = context;
 
   // Get players involved in this round
-  const roundPlayerIds = new Set([
-    ...roundGames.map(g => g.white_fide_id),
-    ...roundGames.map(g => g.black_fide_id),
-  ]);
-
-  const roundPlayers = players.filter(p => roundPlayerIds.has(p.fide_id));
-
   const gamesSummary = roundGames.map(game => {
     const white = players.find(p => p.fide_id === game.white_fide_id);
     const black = players.find(p => p.fide_id === game.black_fide_id);

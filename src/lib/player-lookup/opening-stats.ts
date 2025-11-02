@@ -191,7 +191,7 @@ export async function aggregateOpeningStats(
   let errors = 0;
 
   // Process each opening group
-  for (const [key, group] of openingGroups) {
+  for (const [key, group] of Array.from(openingGroups.entries())) {
     try {
       // Fetch insights for all games in this group
       for (const item of group.games) {
@@ -213,10 +213,10 @@ export async function aggregateOpeningStats(
         draws: stats.draws,
         losses: stats.losses,
         win_rate: stats.winRate,
-        average_accuracy: stats.averageAccuracy,
-        average_centipawn_loss: stats.averageCPL,
-        average_opponent_rating: stats.averageOpponentRating,
-        rating_performance: stats.ratingPerformance,
+        average_accuracy: stats.averageAccuracy ?? undefined,
+        average_centipawn_loss: stats.averageCPL ?? undefined,
+        average_opponent_rating: stats.averageOpponentRating ?? undefined,
+        rating_performance: stats.ratingPerformance ?? undefined,
         last_played_at: stats.lastPlayedAt,
         first_played_at: stats.firstPlayedAt,
       });

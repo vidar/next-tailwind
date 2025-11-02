@@ -9,10 +9,10 @@ import { getPlayerProfileById, getPlayerGames } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { profileId: string } }
+  { params }: { params: Promise<{ profileId: string }> }
 ) {
   try {
-    const profileId = params.profileId;
+    const { profileId } = await params;
 
     const profile = await getPlayerProfileById(profileId);
 

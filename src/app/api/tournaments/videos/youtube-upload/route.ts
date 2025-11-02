@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Get tournament info
     const tournament = await getTournamentById(video.tournament_id);
-    const aiScript = video.ai_script as any;
+    const aiScript = video.ai_script as Record<string, unknown> | null;
 
     // Generate title and description based on video type
     let title = '';
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     };
 
     await updateTournamentVideoStatus(videoId, 'completed', {
-      metadata: updatedMetadata as Record<string, unknown>,
+      metadata: updatedMetadata,
     });
 
     return NextResponse.json({

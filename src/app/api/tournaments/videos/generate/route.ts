@@ -8,7 +8,6 @@ import {
   createTournamentVideo,
   updateTournamentVideoStatus,
   getAnalysisById,
-  type TournamentGame,
 } from '@/lib/db';
 import {
   generateTournamentOverview,
@@ -195,12 +194,12 @@ async function generateVideoScript(
 
     // Update with AI script and selected game
     await updateTournamentVideoStatus(videoId, 'pending', {
-      aiScript: aiScript as Record<string, unknown>,
+      aiScript,
       selectedGameId: selectedGameId || undefined,
       metadata: {
         generatedAt: new Date().toISOString(),
         model: 'openai/gpt-4o-mini',
-      } as Record<string, unknown>,
+      },
     });
 
     console.log(`Video script generated for ${videoId}. Ready for rendering.`);
@@ -235,10 +234,10 @@ async function generateVideoScript(
 async function triggerLambdaRender(
   videoId: string,
   videoType: string,
-  aiScript: any,
-  tournament: any,
-  players: any[],
-  rounds: any[],
+  aiScript: unknown,
+  tournament: unknown,
+  players: unknown[],
+  rounds: unknown[],
   selectedGameId: string | null,
   roundId?: string,
   playerFideId?: string
@@ -252,8 +251,14 @@ async function triggerLambdaRender(
     return;
   }
 
+  // Type assertions for the unknown parameters
+  const tournamentData = tournament as Record<string, unknown>;
+  const playersData = players as Array<Record<string, unknown>>;
+  const roundsData = rounds as Array<Record<string, unknown>>;
+  const aiScriptData = aiScript as Record<string, unknown>;
+
   // Prepare top players for standings
-  const topPlayers = players.slice(0, 8).map(p => ({
+  const topPlayers = playersData.slice(0, 8).map(p => ({
     rank: p.final_rank || 0,
     name: `${p.title || ''} ${p.full_name}`.trim(),
     score: p.final_score || 0,
@@ -286,57 +291,57 @@ async function triggerLambdaRender(
   }
 
   // Prepare input props based on video type
-  let inputProps: any;
+  let inputProps: Record<string, unknown>;
   let compositionName: string;
   let fileName: string;
 
   switch (videoType) {
     case 'tournament_overview': {
       inputProps = {
-        ...aiScript,
-        tournamentName: tournament.name,
-        location: tournament.location || undefined,
-        dates: tournament.start_date && tournament.end_date
-          ? `${tournament.start_date} - ${tournament.end_date}`
-          : tournament.start_date || undefined,
+        ...aiScriptData,
+        tournamentName: tournamentData.name,
+        location: tournamentData.location || undefined,
+        dates: tournamentData.start_date && tournamentData.end_date
+          ? `${tournamentData.start_date} - ${tournamentData.end_date}`
+          : tournamentData.start_date || undefined,
         topPlayers,
         featuredGame,
       };
       compositionName = TOURNAMENT_OVERVIEW_COMP_NAME;
-      fileName = `tournament-${tournament.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.mp4`;
+      fileName = `tournament-${(tournamentData.name as string).replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.mp4`;
       break;
     }
 
     case 'round_overview': {
-      const round = rounds.find(r => r.id === roundId);
+      const round = roundsData.find(r => r.id === roundId);
       inputProps = {
-        ...aiScript,
-        tournamentName: tournament.name,
+        ...aiScriptData,
+        tournamentName: tournamentData.name,
         roundNumber: round?.round_number || 0,
         roundDate: round?.round_date || undefined,
-        location: tournament.location || undefined,
+        location: tournamentData.location || undefined,
         topPlayers,
         featuredGame,
       };
       compositionName = ROUND_OVERVIEW_COMP_NAME;
-      fileName = `round-${round?.round_number || 'unknown'}-${tournament.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.mp4`;
+      fileName = `round-${round?.round_number || 'unknown'}-${(tournamentData.name as string).replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.mp4`;
       break;
     }
 
     case 'player_overview': {
-      const player = players.find(p => p.fide_id === playerFideId);
+      const player = playersData.find(p => p.fide_id === playerFideId);
       inputProps = {
-        ...aiScript,
+        ...aiScriptData,
         playerName: player?.full_name || 'Unknown',
         playerTitle: player?.title || undefined,
         playerRating: player?.starting_rating || undefined,
-        tournamentName: tournament.name,
+        tournamentName: tournamentData.name,
         finalScore: player?.final_score || undefined,
         finalRank: player?.final_rank || undefined,
         featuredGame,
       };
       compositionName = PLAYER_OVERVIEW_COMP_NAME;
-      fileName = `player-${player?.full_name.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'unknown'}-${Date.now()}.mp4`;
+      fileName = `player-${(player?.full_name as string)?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'unknown'}-${Date.now()}.mp4`;
       break;
     }
 
@@ -380,7 +385,7 @@ async function triggerLambdaRender(
     metadata: {
       renderId: result.renderId,
       bucketName: result.bucketName,
-    } as Record<string, unknown>,
+    },
   });
 }
 

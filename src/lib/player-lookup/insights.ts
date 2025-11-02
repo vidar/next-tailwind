@@ -289,9 +289,9 @@ export async function calculateGameInsights(gameId: string): Promise<void> {
     game_changing_blunder: gameChangingBlunder,
     missed_wins: missedWins,
     brilliant_moment: brilliantMoment,
-    expected_result: expectedResult,
-    actual_result: actualResult,
-    result_surprise: resultSurprise,
+    expected_result: expectedResult ?? undefined,
+    actual_result: actualResult ?? undefined,
+    result_surprise: resultSurprise ?? undefined,
     opening_phase_eval: openingPhase?.eval,
     opening_advantage: openingPhase?.advantage,
   });

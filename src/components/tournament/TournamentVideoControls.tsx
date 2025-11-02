@@ -14,7 +14,7 @@ interface VideoProgress {
   progress?: number;
   url?: string;
   videoType?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export default function TournamentVideoControls({
@@ -39,13 +39,13 @@ export default function TournamentVideoControls({
 
         if (data.videos) {
           const completed = data.videos
-            .filter((v: any) => v.status === 'completed')
-            .map((v: any) => ({
-              videoId: v.id,
-              status: v.status,
-              url: v.s3_url,
-              videoType: v.video_type,
-              metadata: v.metadata,
+            .filter((v: Record<string, unknown>) => v.status === 'completed')
+            .map((v: Record<string, unknown>) => ({
+              videoId: v.id as string,
+              status: v.status as string,
+              url: v.s3_url as string,
+              videoType: v.video_type as string,
+              metadata: v.metadata as Record<string, unknown>,
             }));
           setCompletedVideos(completed);
         }
@@ -401,7 +401,7 @@ export default function TournamentVideoControls({
           <h3 className="font-semibold text-lg">✅ Completed Videos</h3>
           {completedVideos.map((video) => {
             const videoTypeName = video.videoType?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Video';
-            const youtubeUrl = video.metadata?.youtubeUrl;
+            const youtubeUrl = video.metadata?.youtubeUrl as string | undefined;
 
             return (
               <div

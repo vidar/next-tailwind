@@ -15,7 +15,7 @@ interface ProfileData {
     platform: string;
     displayName?: string;
     country?: string;
-    ratings: any;
+    ratings: Record<string, unknown>;
     totalGamesAnalyzed: number;
     analysisInProgress: boolean;
   };
@@ -45,22 +45,22 @@ interface InsightsData {
     totalBlunders: number;
     totalMistakes: number;
   };
-  surprisingGames: any[];
-  recentGames: any[];
+  surprisingGames: Array<Record<string, unknown>>;
+  recentGames: Array<Record<string, unknown>>;
 }
 
 interface OpeningStats {
   white: {
     totalOpenings: number;
     totalGames: number;
-    topOpenings: any[];
+    topOpenings: Array<Record<string, unknown>>;
   };
   black: {
     totalOpenings: number;
     totalGames: number;
-    topOpenings: any[];
+    topOpenings: Array<Record<string, unknown>>;
   };
-  topPerformers: any[];
+  topPerformers: Array<Record<string, unknown>>;
 }
 
 export default function PlayerDashboardPage({ params }: { params: Promise<{ profileId: string }> }) {
@@ -188,10 +188,10 @@ export default function PlayerDashboardPage({ params }: { params: Promise<{ prof
               <div className="text-right">
                 <div className="text-sm text-gray-600">Ratings</div>
                 <div className="flex gap-4 mt-1">
-                  {Object.entries(profile.profile.ratings as Record<string, any>).map(([key, value]) => (
+                  {Object.entries(profile.profile.ratings as Record<string, unknown>).map(([key, value]) => (
                     <div key={key}>
                       <div className="text-xs text-gray-500 uppercase">{key}</div>
-                      <div className="text-lg font-semibold">{typeof value === 'object' ? value.rating : value}</div>
+                      <div className="text-lg font-semibold">{typeof value === 'object' && value !== null && 'rating' in value ? (value as Record<string, unknown>).rating as string : value as string}</div>
                     </div>
                   ))}
                 </div>
@@ -317,29 +317,33 @@ export default function PlayerDashboardPage({ params }: { params: Promise<{ prof
                 <h3 className="text-lg font-semibold">Most Surprising Games</h3>
                 {insights.surprisingGames.length > 0 ? (
                   <div className="space-y-3">
-                    {insights.surprisingGames.slice(0, 10).map((game, idx) => (
-                      <div key={idx} className="border rounded-lg p-4 hover:bg-gray-50">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-medium">
-                              {game.whiteUsername} vs {game.blackUsername}
+                    {insights.surprisingGames.slice(0, 10).map((game, idx) => {
+                      const gameData = game as Record<string, unknown>;
+                      const insight = gameData.insight as Record<string, unknown> | undefined;
+                      return (
+                        <div key={idx} className="border rounded-lg p-4 hover:bg-gray-50">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-medium">
+                                {gameData.whiteUsername as string} vs {gameData.blackUsername as string}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {gameData.openingName as string} • {gameData.timeClass as string}
+                              </div>
                             </div>
-                            <div className="text-sm text-gray-600 mt-1">
-                              {game.openingName} • {game.timeClass}
+                            <div className="text-right">
+                              <div className={`text-lg font-bold ${
+                                ((insight?.resultSurprise as number) || 0) > 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {(insight?.resultSurprise as number) > 0 ? '+' : ''}
+                                {((insight?.resultSurprise as number) * 100).toFixed(0)}%
+                              </div>
+                              <div className="text-xs text-gray-500">surprise</div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`text-lg font-bold ${
-                              (game.insight?.resultSurprise || 0) > 0 ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {game.insight?.resultSurprise > 0 ? '+' : ''}
-                              {(game.insight?.resultSurprise * 100).toFixed(0)}%
-                            </div>
-                            <div className="text-xs text-gray-500">surprise</div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-500">No analyzed games yet</p>
@@ -354,12 +358,15 @@ export default function PlayerDashboardPage({ params }: { params: Promise<{ prof
                   <div>
                     <h3 className="text-lg font-semibold mb-4">As White</h3>
                     <div className="space-y-2">
-                      {openings.white.topOpenings.map((opening, idx) => (
-                        <div key={idx} className="border rounded p-3">
-                          <div className="font-medium">{opening.eco} {opening.name}</div>
-                          <div className="text-sm text-gray-600">{opening.games} games</div>
-                        </div>
-                      ))}
+                      {openings.white.topOpenings.map((opening, idx) => {
+                        const openingData = opening as Record<string, unknown>;
+                        return (
+                          <div key={idx} className="border rounded p-3">
+                            <div className="font-medium">{openingData.eco as string} {openingData.name as string}</div>
+                            <div className="text-sm text-gray-600">{openingData.games as number} games</div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -367,12 +374,15 @@ export default function PlayerDashboardPage({ params }: { params: Promise<{ prof
                   <div>
                     <h3 className="text-lg font-semibold mb-4">As Black</h3>
                     <div className="space-y-2">
-                      {openings.black.topOpenings.map((opening, idx) => (
-                        <div key={idx} className="border rounded p-3">
-                          <div className="font-medium">{opening.eco} {opening.name}</div>
-                          <div className="text-sm text-gray-600">{opening.games} games</div>
-                        </div>
-                      ))}
+                      {openings.black.topOpenings.map((opening, idx) => {
+                        const openingData = opening as Record<string, unknown>;
+                        return (
+                          <div key={idx} className="border rounded p-3">
+                            <div className="font-medium">{openingData.eco as string} {openingData.name as string}</div>
+                            <div className="text-sm text-gray-600">{openingData.games as number} games</div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -381,19 +391,22 @@ export default function PlayerDashboardPage({ params }: { params: Promise<{ prof
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Best Performing Openings</h3>
                   <div className="space-y-2">
-                    {openings.topPerformers.map((opening, idx) => (
-                      <div key={idx} className="border rounded p-3 flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{opening.eco} {opening.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {opening.totalGames} games as {opening.color}
+                    {openings.topPerformers.map((opening, idx) => {
+                      const openingData = opening as Record<string, unknown>;
+                      return (
+                        <div key={idx} className="border rounded p-3 flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">{openingData.eco as string} {openingData.name as string}</div>
+                            <div className="text-sm text-gray-600">
+                              {openingData.totalGames as number} games as {openingData.color as string}
+                            </div>
+                          </div>
+                          <div className="text-2xl font-bold text-green-600">
+                            {(openingData.winRate as number).toFixed(0)}%
                           </div>
                         </div>
-                        <div className="text-2xl font-bold text-green-600">
-                          {opening.winRate.toFixed(0)}%
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

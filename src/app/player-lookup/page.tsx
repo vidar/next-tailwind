@@ -16,7 +16,7 @@ export default function PlayerLookupPage() {
   const [searching, setSearching] = useState(false);
   const [importing, setImporting] = useState(false);
   const [searchResult, setSearchResult] = useState<{ found: boolean; error?: string } | null>(null);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<Record<string, unknown> | null>(null);
 
   const handleSearch = async () => {
     if (!username.trim()) return;
@@ -205,16 +205,16 @@ export default function PlayerLookupPage() {
               {importResult.error ? (
                 <div>
                   <p className="text-red-800 font-medium">Import failed</p>
-                  <p className="text-red-700 text-sm mt-1">{importResult.error}</p>
+                  <p className="text-red-700 text-sm mt-1">{importResult.error as string}</p>
                 </div>
               ) : (
                 <div>
                   <p className="text-blue-800 font-medium">✓ Import successful!</p>
                   <div className="text-blue-700 text-sm mt-2 space-y-1">
-                    <p>• Imported: {importResult.import.gamesImported} games</p>
-                    <p>• Duplicates: {importResult.import.gamesDuplicate} games</p>
-                    {importResult.analysis && (
-                      <p>• Queued for analysis: {importResult.analysis.queued} games</p>
+                    <p>• Imported: {(importResult.import as Record<string, unknown>)?.gamesImported as number} games</p>
+                    <p>• Duplicates: {(importResult.import as Record<string, unknown>)?.gamesDuplicate as number} games</p>
+                    {Boolean(importResult.analysis) && (
+                      <p>• Queued for analysis: {(importResult.analysis as Record<string, unknown>)?.queued as number} games</p>
                     )}
                   </div>
                   <p className="text-blue-600 text-sm mt-3 font-medium">
