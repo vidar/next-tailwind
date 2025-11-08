@@ -6,6 +6,55 @@ The Chess Moments application uses PostgreSQL as its database with 8 main tables
 1. **Core Game Analysis** - Chess game analysis, video rendering, and annotations
 2. **Tournament System** - Tournament management with players, rounds, and games
 
+## Database Provider: Neon PostgreSQL
+
+This project uses **Neon** as the PostgreSQL provider with SSL-enabled connections.
+
+### Connection Configuration
+
+The database connection is configured in `.env`:
+
+```env
+# Database Configuration (Neon PostgreSQL with SSL)
+DB_HOST=ep-holy-tree-ag6m2x97-pooler.c-2.eu-central-1.aws.neon.tech
+DB_PORT=5432
+DB_NAME=neondb
+DB_USER=neondb_owner
+DB_PASSWORD=npg_k4HtBLSG0Jrn
+```
+
+**Full connection string:**
+```
+postgresql://neondb_owner:npg_k4HtBLSG0Jrn@ep-holy-tree-ag6m2x97-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+```
+
+### NPM Scripts for Neon
+
+```bash
+# Test database connection
+npm run db:test
+
+# Initialize database schema
+npm run db:init
+```
+
+### SSL Configuration
+
+The application automatically detects Neon and enables SSL (see `src/lib/db.ts:11-21`):
+```typescript
+const isNeon = process.env.DB_HOST?.includes('neon.tech');
+ssl: isNeon ? { rejectUnauthorized: false } : false
+```
+
+### Neon Endpoints
+
+- **Pooler endpoint** (default): `ep-holy-tree-ag6m2x97-pooler.c-2.eu-central-1.aws.neon.tech`
+  - Recommended for connection pooling
+  - Better for serverless environments
+- **Direct endpoint** (alternative): `ep-holy-tree-ag6m2x97.c-2.eu-central-1.aws.neon.tech`
+  - Direct database connection
+  - Use if pooler has issues
+
 ## Quick Start
 
 ### Option 1: Automated Script (Recommended)
