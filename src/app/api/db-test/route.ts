@@ -24,11 +24,14 @@ export async function GET() {
       tables: result.rows.map(r => r.tablename),
       tableCount: result.rows.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : undefined;
+
     return NextResponse.json({
       success: false,
-      error: error.message,
-      code: error.code,
+      error: message,
+      code,
     }, { status: 500 });
   }
 }
