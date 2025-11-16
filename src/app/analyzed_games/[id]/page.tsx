@@ -57,8 +57,6 @@ export default function AnalyzedGameDetailPage() {
     completed_at: string | null;
     metadata?: { youtubeUrl?: string } | null;
   }>>([]);
-  const [uploadingVideoId, setUploadingVideoId] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [watchingVideoId, setWatchingVideoId] = useState<string | null>(null);
 
   // Annotation state
@@ -74,7 +72,6 @@ export default function AnalyzedGameDetailPage() {
 
   // Key moments state
   const [keyMoments, setKeyMoments] = useState<number[]>([]);
-  const [isKeyMomentsOpen, setIsKeyMomentsOpen] = useState(true);
 
   // Render options modal
   const [showRenderModal, setShowRenderModal] = useState(false);
@@ -190,39 +187,6 @@ export default function AnalyzedGameDetailPage() {
       setExistingVideos(data.videos.filter((v: { status: string }) => v.status === "completed"));
     } catch (err) {
       console.error("Failed to fetch videos:", err);
-    }
-  };
-
-  const uploadToYouTube = async (videoId: string) => {
-    setUploadingVideoId(videoId);
-    setUploadError(null);
-
-    try {
-      const response = await fetch("/api/youtube/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to upload to YouTube");
-      }
-
-      const data = await response.json();
-
-      // Refresh videos to show YouTube URL
-      await fetchVideos();
-
-      // Open YouTube video in new tab
-      if (data.youtubeUrl) {
-        window.open(data.youtubeUrl, "_blank");
-      }
-    } catch (err) {
-      console.error("YouTube upload error:", err);
-      setUploadError(err instanceof Error ? err.message : "Failed to upload to YouTube");
-    } finally {
-      setUploadingVideoId(null);
     }
   };
 
@@ -823,12 +787,6 @@ export default function AnalyzedGameDetailPage() {
         {existingVideos.length > 0 && renderState.status !== "done" && (
           <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Rendered Videos</h2>
-            {uploadError && (
-              <div className="mb-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 rounded-lg p-4">
-                <p className="font-medium">Upload Error</p>
-                <p className="text-sm">{uploadError}</p>
-              </div>
-            )}
             <div className="space-y-4">
               {existingVideos.map((video) => (
                 <div
