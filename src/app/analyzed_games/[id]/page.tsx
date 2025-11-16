@@ -422,9 +422,25 @@ export default function AnalyzedGameDetailPage() {
       const positionBeforeMove = game.fen();
       const move = history[annotationMoveIndex - 1];
 
-      // Get evaluations if available
-      const currentEval = analysis.analysis_results?.moves?.[annotationMoveIndex - 1]?.evaluation;
+      // Get move data from analysis
+      const moveData = analysis.analysis_results?.moves?.[annotationMoveIndex - 1];
+      const currentEval = moveData?.evaluation;
       const previousEval = analysis.analysis_results?.moves?.[annotationMoveIndex - 2]?.evaluation;
+      const bestMove = moveData?.best_move;
+      const bestEval = moveData?.best_move ? moveData?.evaluation : undefined; // Approximation
+      const classification = moveData?.classification;
+
+      // Determine which side played this move (odd index = white, even = black)
+      const sideToMove = annotationMoveIndex % 2 === 1 ? 'white' : 'black';
+
+      // Get previous 2-3 moves for context
+      const previousMoves: string[] = [];
+      const startIdx = Math.max(0, annotationMoveIndex - 4);
+      for (let i = startIdx; i < annotationMoveIndex - 1; i++) {
+        if (history[i]) {
+          previousMoves.push(history[i]);
+        }
+      }
 
       const response = await fetch("/api/annotations/generate", {
         method: "POST",
@@ -434,6 +450,12 @@ export default function AnalyzedGameDetailPage() {
           move,
           evaluation: currentEval,
           previousEvaluation: previousEval,
+          bestMove,
+          bestEvaluation: bestEval,
+          classification,
+          moveNumber: annotationMoveIndex,
+          sideToMove,
+          previousMoves: previousMoves.length > 0 ? previousMoves : undefined,
         }),
       });
 
@@ -476,9 +498,25 @@ export default function AnalyzedGameDetailPage() {
       const positionBeforeMove = game.fen();
       const move = history[moveIdx - 1];
 
-      // Get evaluations if available
-      const currentEval = analysis.analysis_results?.moves?.[moveIdx - 1]?.evaluation;
+      // Get move data from analysis
+      const moveData = analysis.analysis_results?.moves?.[moveIdx - 1];
+      const currentEval = moveData?.evaluation;
       const previousEval = analysis.analysis_results?.moves?.[moveIdx - 2]?.evaluation;
+      const bestMove = moveData?.best_move;
+      const bestEval = moveData?.best_move ? moveData?.evaluation : undefined;
+      const classification = moveData?.classification;
+
+      // Determine which side played this move (odd index = white, even = black)
+      const sideToMove = moveIdx % 2 === 1 ? 'white' : 'black';
+
+      // Get previous 2-3 moves for context
+      const previousMoves: string[] = [];
+      const startIdx = Math.max(0, moveIdx - 4);
+      for (let i = startIdx; i < moveIdx - 1; i++) {
+        if (history[i]) {
+          previousMoves.push(history[i]);
+        }
+      }
 
       // Generate annotation
       const generateResponse = await fetch("/api/annotations/generate", {
@@ -489,6 +527,12 @@ export default function AnalyzedGameDetailPage() {
           move,
           evaluation: currentEval,
           previousEvaluation: previousEval,
+          bestMove,
+          bestEvaluation: bestEval,
+          classification,
+          moveNumber: moveIdx,
+          sideToMove,
+          previousMoves: previousMoves.length > 0 ? previousMoves : undefined,
         }),
       });
 
