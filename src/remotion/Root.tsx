@@ -39,11 +39,12 @@ const calculateChessDuration = (pgn: string, fps: number): number => {
     game.loadPgn(pgn);
     const moves = game.history();
     const INTRO_DURATION = 3; // 3 seconds intro
+    const RESULT_DURATION = 4; // 4 seconds result screen
     const OUTRO_DURATION = 3; // 3 seconds outro
     const gameDuration = moves.length * CHESS_SECONDS_PER_MOVE;
-    return (INTRO_DURATION + gameDuration + OUTRO_DURATION) * fps;
+    return (INTRO_DURATION + gameDuration + RESULT_DURATION + OUTRO_DURATION) * fps;
   } catch {
-    return 66 * fps; // Default to 66 seconds if parsing fails (60 + 3 intro + 3 outro)
+    return 70 * fps; // Default to 70 seconds if parsing fails (60 + 3 intro + 4 result + 3 outro)
   }
 };
 
@@ -58,12 +59,13 @@ const calculateAnnotatedDuration = (
     game.loadPgn(pgn);
     const moves = game.history();
     const INTRO_DURATION = 3; // 3 seconds intro
+    const RESULT_DURATION = 4; // 4 seconds result screen
     const OUTRO_DURATION = 3; // 3 seconds outro
     const baseDuration = moves.length * CHESS_SECONDS_PER_MOVE;
     const annotationDuration = annotations.length * 4; // 4 seconds per annotation
-    return (INTRO_DURATION + baseDuration + annotationDuration + OUTRO_DURATION) * fps;
+    return (INTRO_DURATION + baseDuration + annotationDuration + RESULT_DURATION + OUTRO_DURATION) * fps;
   } catch {
-    return 66 * fps; // Default to 66 seconds if parsing fails
+    return 70 * fps; // Default to 70 seconds if parsing fails (60 + 3 intro + 4 result + 3 outro)
   }
 };
 

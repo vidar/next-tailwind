@@ -708,14 +708,13 @@ export default function AnalyzedGameDetailPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-2 md:gap-4 items-center">
-            {renderState.status === "init" || renderState.status === "error" ? (
-              <button
-                onClick={() => setShowRenderModal(true)}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors"
-              >
-                Render Video
-              </button>
-            ) : null}
+            <button
+              onClick={() => setShowRenderModal(true)}
+              disabled={renderState.status === "invoking" || renderState.status === "rendering"}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Render Video
+            </button>
             <Link
               href="/analyzed_games"
               className="text-blue-500 hover:text-blue-600 underline text-sm md:text-base"
@@ -726,11 +725,9 @@ export default function AnalyzedGameDetailPage() {
         </div>
 
         {/* Render Progress */}
-        {(renderState.status === "invoking" || renderState.status === "rendering" || renderState.status === "done") && (
+        {(renderState.status === "invoking" || renderState.status === "rendering") && (
           <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              {renderState.status === "done" ? "Render Complete" : "Rendering Video..."}
-            </h2>
+            <h2 className="text-xl font-semibold mb-4">Rendering Video...</h2>
             {renderState.status === "rendering" && (
               <div className="mb-4">
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
@@ -742,28 +739,6 @@ export default function AnalyzedGameDetailPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Progress: {Math.round(renderState.progress * 100)}%
                 </p>
-              </div>
-            )}
-            {renderState.status === "done" && (
-              <div>
-                <p className="text-green-600 dark:text-green-400 mb-4">
-                  Video rendered successfully! ({(renderState.size / 1024 / 1024).toFixed(2)} MB)
-                </p>
-                <div className="flex gap-4">
-                  <a
-                    href={renderState.url}
-                    download
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
-                  >
-                    Download Video
-                  </a>
-                  <button
-                    onClick={undo}
-                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-medium transition-colors"
-                  >
-                    Render Another
-                  </button>
-                </div>
               </div>
             )}
           </div>
@@ -784,7 +759,7 @@ export default function AnalyzedGameDetailPage() {
         )}
 
         {/* Existing Videos */}
-        {existingVideos.length > 0 && renderState.status !== "done" && (
+        {existingVideos.length > 0 && (
           <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Rendered Videos</h2>
             <div className="space-y-4">
