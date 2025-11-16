@@ -20,6 +20,7 @@ import "chessground/assets/chessground.cburnett.css";
 import "./chessground-override.css";
 import { LogoIntro } from "./LogoIntro";
 import { LogoOutroWithCTA } from "./LogoOutroWithCTA";
+import { ResultScreen } from "./ResultScreen";
 import { getMusicTrack } from "../../lib/music-config";
 
 // Main game content component
@@ -310,6 +311,7 @@ export const ChessGameWalkthrough = ({
 
   // Calculate durations
   const INTRO_DURATION = fps * 3; // 3 seconds intro
+  const RESULT_DURATION = fps * 4; // 4 seconds result screen
   const OUTRO_DURATION = fps * 3; // 3 seconds outro
 
   // Calculate game duration
@@ -348,8 +350,18 @@ export const ChessGameWalkthrough = ({
         />
       </Sequence>
 
+      {/* Result Screen */}
+      <Sequence from={INTRO_DURATION + GAME_DURATION} durationInFrames={RESULT_DURATION}>
+        <ResultScreen
+          white={gameInfo.white}
+          black={gameInfo.black}
+          result={gameInfo.result}
+          termination={gameInfo.termination}
+        />
+      </Sequence>
+
       {/* Outro with CTA */}
-      <Sequence from={INTRO_DURATION + GAME_DURATION} durationInFrames={OUTRO_DURATION}>
+      <Sequence from={INTRO_DURATION + GAME_DURATION + RESULT_DURATION} durationInFrames={OUTRO_DURATION}>
         <LogoOutroWithCTA />
       </Sequence>
     </AbsoluteFill>
