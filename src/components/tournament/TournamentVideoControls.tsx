@@ -29,6 +29,7 @@ export default function TournamentVideoControls({
   const [activeVideos, setActiveVideos] = useState<VideoProgress[]>([]);
   const [completedVideos, setCompletedVideos] = useState<VideoProgress[]>([]);
   const [uploadingToYoutube, setUploadingToYoutube] = useState<string | null>(null);
+  const [watchingVideo, setWatchingVideo] = useState<string | null>(null);
 
   // Fetch all videos for this tournament on mount
   useEffect(() => {
@@ -423,6 +424,13 @@ export default function TournamentVideoControls({
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => setWatchingVideo(video.videoId)}
+                    className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                  >
+                    ▶️ Watch
+                  </button>
+
                   {video.url && (
                     <a
                       href={video.url}
@@ -469,6 +477,51 @@ export default function TournamentVideoControls({
           Completed videos will appear above with download and YouTube upload options.
         </p>
       </div>
+
+      {/* Video Player Modal */}
+      {watchingVideo && (() => {
+        const video = completedVideos.find(v => v.videoId === watchingVideo);
+        if (!video || !video.url) return null;
+
+        // Transform S3 URL to CDN proxy URL
+        // Example: https://s3.amazonaws.com/bucket/renders/abc/out.mp4 -> https://cdn.chessmoments.com/s3-proxy/renders/abc/out.mp4
+        const pathMatch = video.url.match(/\/renders\/.+$/);
+        const videoUrl = pathMatch
+          ? `https://cdn.chessmoments.com/s3-proxy${pathMatch[0]}`
+          : video.url;
+
+        return (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => setWatchingVideo(null)}
+          >
+            <div
+              className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl max-w-5xl w-full overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold">Video Player</h3>
+                <button
+                  onClick={() => setWatchingVideo(null)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-4 bg-black">
+                <video
+                  src={videoUrl}
+                  controls
+                  autoPlay
+                  className="w-full max-h-[70vh]"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

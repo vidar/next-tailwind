@@ -59,6 +59,7 @@ export default function AnalyzedGameDetailPage() {
   }>>([]);
   const [uploadingVideoId, setUploadingVideoId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [watchingVideoId, setWatchingVideoId] = useState<string | null>(null);
 
   // Annotation state
   const [annotations, setAnnotations] = useState<Array<{ id: string; move_index: number; annotation_text: string }>>([]);
@@ -743,12 +744,6 @@ export default function AnalyzedGameDetailPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-2 md:gap-4 items-center">
-            <Link
-              href={`/preview/${id}`}
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-medium transition-colors"
-            >
-              Preview Video
-            </Link>
             {renderState.status === "init" || renderState.status === "error" ? (
               <button
                 onClick={() => setShowRenderModal(true)}
@@ -860,6 +855,12 @@ export default function AnalyzedGameDetailPage() {
                       )}
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => setWatchingVideoId(video.id)}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors"
+                      >
+                        Watch
+                      </button>
                       <a
                         href={video.s3_url}
                         download
@@ -867,22 +868,6 @@ export default function AnalyzedGameDetailPage() {
                       >
                         Download
                       </a>
-                      {!video.metadata?.youtubeUrl && (
-                        <button
-                          onClick={() => uploadToYouTube(video.id)}
-                          disabled={uploadingVideoId === video.id}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                          {uploadingVideoId === video.id ? (
-                            <>
-                              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                              Uploading...
-                            </>
-                          ) : (
-                            "Upload to YouTube"
-                          )}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1505,6 +1490,51 @@ export default function AnalyzedGameDetailPage() {
           onRender={handleRenderVideo}
           hasAnnotations={annotations.length > 0}
         />
+
+        {/* Video Player Modal */}
+        {watchingVideoId && (() => {
+          const video = existingVideos.find(v => v.id === watchingVideoId);
+          if (!video) return null;
+
+          // Transform S3 URL to CDN proxy URL
+          // Example: https://s3.amazonaws.com/bucket/renders/abc/out.mp4 -> https://cdn.chessmoments.com/s3-proxy/renders/abc/out.mp4
+          const pathMatch = video.s3_url.match(/\/renders\/.+$/);
+          const videoUrl = pathMatch
+            ? `https://cdn.chessmoments.com/s3-proxy${pathMatch[0]}`
+            : video.s3_url;
+
+          return (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+              onClick={() => setWatchingVideoId(null)}
+            >
+              <div
+                className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl max-w-5xl w-full overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold">Video Player</h3>
+                  <button
+                    onClick={() => setWatchingVideoId(null)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="p-4 bg-black">
+                  <video
+                    src={videoUrl}
+                    controls
+                    autoPlay
+                    className="w-full max-h-[70vh]"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </div>
