@@ -978,77 +978,6 @@ export default function AnalyzedGameDetailPage() {
 
           {/* Sidebar - Move List & Game Info */}
           <div className="space-y-4 md:space-y-6">
-            {/* Key Moments Section */}
-            {keyMoments.length > 0 && (
-              <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                <button
-                  onClick={() => setIsKeyMomentsOpen(!isKeyMomentsOpen)}
-                  className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-t-lg"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">⭐</span>
-                    <h3 className="text-base md:text-lg font-semibold">Key Moments</h3>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full font-medium">
-                      {getAnnotatedKeyMomentsCount()} / {keyMoments.length} annotated
-                    </span>
-                    <span className="text-xl">{isKeyMomentsOpen ? "−" : "+"}</span>
-                  </div>
-                </button>
-                {isKeyMomentsOpen && (
-                  <div className="px-4 pb-4">
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                      Critical positions worth annotating for your video
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {keyMoments.map((moveNum) => {
-                        const moveNotation = moves[moveNum - 1];
-                        const moveNumber = Math.floor((moveNum - 1) / 2) + 1;
-                        const isWhite = moveNum % 2 === 1;
-                        const hasNote = hasAnnotation(moveNum);
-                        const reason = getKeyMomentReason(moveNum);
-
-                        return (
-                          <button
-                            key={moveNum}
-                            onClick={() => openAnnotationPanel(moveNum)}
-                            className={`p-2 rounded-lg border-2 transition-all text-left ${
-                              hasNote
-                                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                                : "border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-mono font-medium">
-                                {moveNumber}{isWhite ? "." : "..."} {moveNotation}
-                              </span>
-                              {hasNote ? (
-                                <span className="text-green-600 dark:text-green-400">✓</span>
-                              ) : (
-                                <span className="text-gray-400">○</span>
-                              )}
-                            </div>
-                            {reason && (
-                              <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                reason === 'Blunder' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
-                                reason === 'Brilliant' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
-                                reason === 'Mistake' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' :
-                                reason === 'Best' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                                'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                              }`}>
-                                {reason}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Move List with Annotations - Hidden on mobile */}
             <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -1260,152 +1189,6 @@ export default function AnalyzedGameDetailPage() {
                     })}
                   </div>
                 </div>
-
-                {/* Inline Annotation Panel */}
-                {showAnnotationPanel && annotationMoveIndex !== null && (
-                  <div className="mt-4 border-t-2 border-blue-500 pt-4 animate-in slide-in-from-top duration-200">
-                    {/* Header with navigation */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-semibold">
-                          {hasAnnotation(annotationMoveIndex) ? "✏️ Edit" : "➕ Add"} Annotation
-                        </span>
-                        {annotationMoveIndex && moves[annotationMoveIndex - 1] && (
-                          <span className="text-sm font-mono text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
-                            {Math.floor((annotationMoveIndex - 1) / 2) + 1}
-                            {annotationMoveIndex % 2 === 1 ? ". " : "... "}
-                            {moves[annotationMoveIndex - 1]}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={closeAnnotationPanel}
-                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl font-bold"
-                        title="Close (Esc)"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* Progress indicator for key moments */}
-                    {isKeyMoment(annotationMoveIndex) && (
-                      <div className="mb-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-yellow-800 dark:text-yellow-200">
-                            ⭐ Key moment {keyMoments.indexOf(annotationMoveIndex) + 1} of {keyMoments.length}
-                            {getKeyMomentReason(annotationMoveIndex) && ` • ${getKeyMomentReason(annotationMoveIndex)}`}
-                          </span>
-                          <span className="text-yellow-700 dark:text-yellow-300 font-medium">
-                            {getAnnotatedKeyMomentsCount()} / {keyMoments.length} annotated
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Mini board preview */}
-                    <div className="mb-3">
-                      <div
-                        style={{
-                          width: "200px",
-                          height: "200px",
-                          position: "relative",
-                        }}
-                        className="rounded-lg overflow-hidden shadow-md mx-auto"
-                      >
-                        <div
-                          ref={annotationBoardRef}
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            height: "100%",
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Annotation textarea with AI button */}
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium">Your annotation:</label>
-                        <button
-                          onClick={generateAIAnnotation}
-                          disabled={generatingAI}
-                          className="px-2 py-1 bg-purple-500 text-white rounded text-xs font-medium transition-colors hover:bg-purple-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
-                        >
-                          {generatingAI ? (
-                            <>
-                              <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                              <span>Generating...</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>✨</span>
-                              <span>AI Generate</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <textarea
-                        value={annotationText}
-                        onChange={(e) => setAnnotationText(e.target.value)}
-                        placeholder="Enter your commentary for this position... (max 500 characters)"
-                        className="w-full h-32 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 resize-none"
-                        maxLength={500}
-                        autoFocus
-                      />
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">
-                        {annotationText.length} / 500 characters
-                      </div>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
-                        {hasAnnotation(annotationMoveIndex) && (
-                          <button
-                            onClick={() => {
-                              const ann = annotations.find((a) => a.move_index === annotationMoveIndex);
-                              if (ann) {
-                                deleteAnnotationHandler(ann.id);
-                                closeAnnotationPanel();
-                              }
-                            }}
-                            className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium transition-colors"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={closeAnnotationPanel}
-                          className="px-3 py-1.5 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 text-sm font-medium transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={saveAnnotation}
-                          disabled={annotationSaving || !annotationText.trim()}
-                          className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                          {annotationSaving ? "Saving..." : "Save"}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Keyboard shortcuts hint */}
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
-                        <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">N</kbd> Next key moment</span>
-                        <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">P</kbd> Previous</span>
-                        <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">S</kbd> Skip</span>
-                        <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Esc</kbd> Close</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
             {/* Game Info */}
@@ -1535,6 +1318,163 @@ export default function AnalyzedGameDetailPage() {
             </div>
           );
         })()}
+
+        {/* Annotation Modal */}
+        {showAnnotationPanel && annotationMoveIndex !== null && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={closeAnnotationPanel}
+          >
+            <div
+              className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">
+                    {hasAnnotation(annotationMoveIndex) ? "✏️ Edit" : "➕ Add"} Annotation
+                  </span>
+                  {annotationMoveIndex && moves[annotationMoveIndex - 1] && (
+                    <span className="text-sm font-mono text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                      {Math.floor((annotationMoveIndex - 1) / 2) + 1}
+                      {annotationMoveIndex % 2 === 1 ? ". " : "... "}
+                      {moves[annotationMoveIndex - 1]}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={closeAnnotationPanel}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl leading-none"
+                  title="Close (Esc)"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Progress indicator for key moments */}
+                {isKeyMoment(annotationMoveIndex) && (
+                  <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-yellow-800 dark:text-yellow-200">
+                        ⭐ Key moment {keyMoments.indexOf(annotationMoveIndex) + 1} of {keyMoments.length}
+                        {getKeyMomentReason(annotationMoveIndex) && ` • ${getKeyMomentReason(annotationMoveIndex)}`}
+                      </span>
+                      <span className="text-yellow-700 dark:text-yellow-300 font-medium">
+                        {getAnnotatedKeyMomentsCount()} / {keyMoments.length} annotated
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mini board preview */}
+                <div className="mb-4">
+                  <div
+                    style={{
+                      width: "240px",
+                      height: "240px",
+                      position: "relative",
+                    }}
+                    className="rounded-lg overflow-hidden shadow-md mx-auto"
+                  >
+                    <div
+                      ref={annotationBoardRef}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Annotation textarea with AI button */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium">Your annotation:</label>
+                    <button
+                      onClick={generateAIAnnotation}
+                      disabled={generatingAI}
+                      className="px-3 py-1.5 bg-purple-500 text-white rounded text-sm font-medium transition-colors hover:bg-purple-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {generatingAI ? (
+                        <>
+                          <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>✨</span>
+                          <span>AI Generate</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <textarea
+                    value={annotationText}
+                    onChange={(e) => setAnnotationText(e.target.value)}
+                    placeholder="Enter your commentary for this position... (max 500 characters)"
+                    className="w-full h-32 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 resize-none"
+                    maxLength={500}
+                    autoFocus
+                  />
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">
+                    {annotationText.length} / 500 characters
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
+                    {hasAnnotation(annotationMoveIndex) && (
+                      <button
+                        onClick={() => {
+                          const ann = annotations.find((a) => a.move_index === annotationMoveIndex);
+                          if (ann) {
+                            deleteAnnotationHandler(ann.id);
+                            closeAnnotationPanel();
+                          }
+                        }}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium transition-colors"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={closeAnnotationPanel}
+                      className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 text-sm font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveAnnotation}
+                      disabled={annotationSaving || !annotationText.trim()}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {annotationSaving ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Keyboard shortcuts hint */}
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
+                    <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">N</kbd> Next key moment</span>
+                    <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">P</kbd> Previous</span>
+                    <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">S</kbd> Skip</span>
+                    <span><kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Esc</kbd> Close</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
