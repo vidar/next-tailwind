@@ -6,7 +6,10 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/blog(.*)',
   '/search(.*)',
+  '/keystatic(.*)',
+  '/api/keystatic(.*)',
   '/api/webhooks(.*)',
+  // Add specific Keystatic pages here if they should be public (e.g., '/about', '/privacy', etc.)
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
