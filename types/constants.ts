@@ -19,6 +19,8 @@ export const VIDEO_FPS = 30;
 // Chess game compositions
 export const CHESS_GAME_COMP_NAME = "ChessGameWalkthrough";
 export const CHESS_GAME_ANNOTATED_COMP_NAME = "ChessGameAnnotated";
+export const CHESS_GAME_HIGHLIGHTS_COMP_NAME = "ChessGameHighlights";
+export const CHESS_GAME_PUZZLE_COMP_NAME = "ChessGamePuzzle";
 
 export const ChessGameProps = z.object({
   pgn: z.string(),

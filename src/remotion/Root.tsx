@@ -9,6 +9,8 @@ import {
   VIDEO_WIDTH,
   CHESS_GAME_COMP_NAME,
   CHESS_GAME_ANNOTATED_COMP_NAME,
+  CHESS_GAME_HIGHLIGHTS_COMP_NAME,
+  CHESS_GAME_PUZZLE_COMP_NAME,
   defaultChessGameProps,
   defaultChessGameAnnotatedProps,
   CHESS_VIDEO_WIDTH,
@@ -27,6 +29,8 @@ import {
 import { NextLogo } from "./MyComp/NextLogo";
 import { ChessGameWalkthrough } from "./ChessGame/ChessGameWalkthrough";
 import { ChessGameAnnotated } from "./ChessGame/ChessGameAnnotated";
+import { ChessGameHighlights } from "./ChessGame/ChessGameHighlights";
+import { ChessGamePuzzle } from "./ChessGame/ChessGamePuzzle";
 import { TournamentOverview, TournamentOverviewProps } from "./TournamentVideo/TournamentOverview";
 import { RoundOverview, RoundOverviewProps } from "./TournamentVideo/RoundOverview";
 import { PlayerOverview, PlayerOverviewProps } from "./TournamentVideo/PlayerOverview";
@@ -69,6 +73,67 @@ const calculateAnnotatedDuration = (
   }
 };
 
+// Calculate duration for highlights composition (0.5s per move + 5s per critical moment)
+const calculateHighlightsDuration = (
+  pgn: string,
+  analysisResults: any,
+  fps: number
+): number => {
+  try {
+    const game = new Chess();
+    game.loadPgn(pgn);
+    const moves = game.history();
+    const INTRO_DURATION = 3;
+    const RESULT_DURATION = 4;
+    const OUTRO_DURATION = 3;
+
+    // Detect critical moments (eval swings >= 200)
+    let gameDuration = 0;
+    if (analysisResults?.moves) {
+      const evals = analysisResults.moves.map((m: any) => m.evaluation || 0);
+      for (let i = 0; i <= moves.length; i++) {
+        const isCritical = i > 0 && Math.abs(evals[i] - evals[i - 1]) >= 200;
+        gameDuration += isCritical ? 5 : 0.5;
+      }
+    } else {
+      gameDuration = moves.length * 0.5;
+    }
+
+    return (INTRO_DURATION + gameDuration + RESULT_DURATION + OUTRO_DURATION) * fps;
+  } catch {
+    return 40 * fps; // Default to 40 seconds for highlights
+  }
+};
+
+// Calculate duration for puzzle composition (1s per move + 8s per puzzle moment)
+const calculatePuzzleDuration = (
+  pgn: string,
+  annotations: Array<{ move_index: number }>,
+  fps: number
+): number => {
+  try {
+    const game = new Chess();
+    game.loadPgn(pgn);
+    const moves = game.history();
+    const INTRO_DURATION = 3;
+    const RESULT_DURATION = 4;
+    const OUTRO_DURATION = 3;
+
+    // Limit to first 4 annotations for puzzles
+    const puzzleMoments = annotations.slice(0, 4).map((ann) => ann.move_index);
+    const puzzleSet = new Set(puzzleMoments);
+
+    let gameDuration = 0;
+    for (let i = 0; i <= moves.length; i++) {
+      gameDuration += puzzleSet.has(i) ? 8 : 1;
+    }
+
+    return (INTRO_DURATION + gameDuration + RESULT_DURATION + OUTRO_DURATION) * fps;
+  } catch {
+    return 90 * fps; // Default to 90 seconds for puzzle mode
+  }
+};
+
 export const RemotionRoot: React.FC = () => {
   const chessDuration = calculateChessDuration(
     defaultChessGameProps.pgn,
@@ -76,6 +141,18 @@ export const RemotionRoot: React.FC = () => {
   );
 
   const annotatedDuration = calculateAnnotatedDuration(
+    defaultChessGameAnnotatedProps.pgn,
+    defaultChessGameAnnotatedProps.annotations,
+    CHESS_VIDEO_FPS
+  );
+
+  const highlightsDuration = calculateHighlightsDuration(
+    defaultChessGameProps.pgn,
+    defaultChessGameProps.analysisResults,
+    CHESS_VIDEO_FPS
+  );
+
+  const puzzleDuration = calculatePuzzleDuration(
     defaultChessGameAnnotatedProps.pgn,
     defaultChessGameAnnotatedProps.annotations,
     CHESS_VIDEO_FPS
@@ -136,6 +213,52 @@ export const RemotionRoot: React.FC = () => {
         schema={ChessGameAnnotatedProps}
         calculateMetadata={({ props }) => {
           const duration = calculateAnnotatedDuration(
+            props.pgn,
+            props.annotations,
+            CHESS_VIDEO_FPS
+          );
+          return {
+            durationInFrames: duration,
+            props,
+          };
+        }}
+      />
+
+      {/* Chess game highlights composition */}
+      <Composition
+        id={CHESS_GAME_HIGHLIGHTS_COMP_NAME}
+        component={ChessGameHighlights}
+        durationInFrames={highlightsDuration}
+        fps={CHESS_VIDEO_FPS}
+        width={CHESS_VIDEO_WIDTH}
+        height={CHESS_VIDEO_HEIGHT}
+        defaultProps={defaultChessGameProps}
+        schema={ChessGameProps}
+        calculateMetadata={({ props }) => {
+          const duration = calculateHighlightsDuration(
+            props.pgn,
+            props.analysisResults,
+            CHESS_VIDEO_FPS
+          );
+          return {
+            durationInFrames: duration,
+            props,
+          };
+        }}
+      />
+
+      {/* Chess game puzzle composition */}
+      <Composition
+        id={CHESS_GAME_PUZZLE_COMP_NAME}
+        component={ChessGamePuzzle}
+        durationInFrames={puzzleDuration}
+        fps={CHESS_VIDEO_FPS}
+        width={CHESS_VIDEO_WIDTH}
+        height={CHESS_VIDEO_HEIGHT}
+        defaultProps={defaultChessGameAnnotatedProps}
+        schema={ChessGameAnnotatedProps}
+        calculateMetadata={({ props }) => {
+          const duration = calculatePuzzleDuration(
             props.pgn,
             props.annotations,
             CHESS_VIDEO_FPS
