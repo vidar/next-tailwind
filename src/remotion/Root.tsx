@@ -76,7 +76,7 @@ const calculateAnnotatedDuration = (
 // Calculate duration for highlights composition (0.5s per move + 5s per critical moment)
 const calculateHighlightsDuration = (
   pgn: string,
-  analysisResults: any,
+  analysisResults: { moves?: Array<{ evaluation?: number }> } | undefined,
   fps: number
 ): number => {
   try {
@@ -90,7 +90,7 @@ const calculateHighlightsDuration = (
     // Detect critical moments (eval swings >= 200)
     let gameDuration = 0;
     if (analysisResults?.moves) {
-      const evals = analysisResults.moves.map((m: any) => m.evaluation || 0);
+      const evals = analysisResults.moves.map((m) => m.evaluation || 0);
       for (let i = 0; i <= moves.length; i++) {
         const isCritical = i > 0 && Math.abs(evals[i] - evals[i - 1]) >= 200;
         gameDuration += isCritical ? 5 : 0.5;

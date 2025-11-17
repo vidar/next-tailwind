@@ -336,7 +336,6 @@ const GameContent = ({
       const pauseEnd = fps * 1;
       const questionEnd = fps * 2;
       const thinkingEnd = fps * 6;
-      const revealEnd = fps * 8;
 
       let puzzlePhase: "question" | "thinking" | "reveal" | null = null;
       let challengeOpacity = 0;

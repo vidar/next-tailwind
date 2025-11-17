@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { unifiedSearch, getFacets, INDEXES } from '@/lib/meilisearch';
+import { unifiedSearch } from '@/lib/meilisearch';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const hybrid = searchParams.get('hybrid') !== 'false'; // Default to true
 
     // Parse filters
-    const filters: Record<string, any> = {};
+    const filters: Record<string, string | boolean> = {};
     const status = searchParams.get('status');
     const result = searchParams.get('result');
     const openingEco = searchParams.get('opening_eco');

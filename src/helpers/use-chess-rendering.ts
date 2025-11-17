@@ -39,7 +39,7 @@ export const useChessRendering = (gameId: string) => {
   });
 
   const renderMedia = useCallback(async (
-    compositionType: "walkthrough" | "annotated" = "walkthrough",
+    compositionType: "walkthrough" | "annotated" | "highlights" | "puzzle" = "walkthrough",
     aspectRatio: "landscape" | "portrait" = "landscape",
     orientation: "white" | "black" = "white",
     musicGenre: string = "none"

@@ -219,7 +219,7 @@ export async function indexGames(
   games: Array<{
     id: string;
     pgn: string;
-    game_data?: any;
+    game_data?: { white?: string; black?: string; result?: string; date?: string; eco?: string; opening?: string; time_control?: string };
     status: string;
     created_at: Date;
     annotations?: Array<{ annotation_text: string }>;
@@ -280,11 +280,11 @@ export async function indexVideos(
     user_id?: string;
     composition_type: string;
     status: string;
-    metadata?: any;
+    metadata?: { youtubeUrl?: string; s3Url?: string };
     created_at: Date;
     game?: {
       pgn: string;
-      game_data?: any;
+      game_data?: { white?: string; black?: string; result?: string; date?: string };
     };
   }>
 ): Promise<void> {
@@ -332,7 +332,7 @@ export async function indexTournaments(
     total_rounds?: number;
     time_control?: string;
     players?: Array<{ full_name: string }>;
-    games?: Array<any>;
+    games?: Array<{ id: string }>;
   }>
 ): Promise<void> {
   const tournamentsIndex = client.index(INDEXES.TOURNAMENTS);
@@ -417,7 +417,7 @@ export async function unifiedSearch(
   options: {
     indexes?: string[];
     limit?: number;
-    filters?: Record<string, any>;
+    filters?: Record<string, string | boolean>;
     hybrid?: boolean;
   } = {}
 ) {
@@ -428,7 +428,11 @@ export async function unifiedSearch(
     hybrid = true,
   } = options;
 
-  const searchParams: any = {
+  const searchParams: {
+    limit: number;
+    hybrid?: { semanticRatio: number; embedder: string };
+    filter?: string[];
+  } = {
     limit,
   };
 
@@ -489,7 +493,7 @@ export async function deleteDocument(indexName: string, documentId: string) {
  */
 export async function updateDocument(
   indexName: string,
-  document: Record<string, any>
+  document: Record<string, unknown>
 ) {
   const index = client.index(indexName);
   await index.addDocuments([document], { primaryKey: 'id' });

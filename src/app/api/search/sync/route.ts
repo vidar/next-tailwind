@@ -5,7 +5,6 @@ import {
   indexVideos,
   indexTournaments,
   indexPlayers,
-  updateDocument,
   deleteDocument,
   INDEXES,
 } from '@/lib/meilisearch';
@@ -136,7 +135,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'player': {
-        const { platform, fideId } = body;
+        const { fideId } = body;
 
         if (action === 'delete' && id) {
           await deleteDocument(INDEXES.PLAYERS, id);

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 interface SearchResult {
   id: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface SearchResponse {
@@ -27,7 +27,7 @@ interface FacetsResponse {
   facets: Record<string, Record<string, number>>;
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -362,28 +362,28 @@ function ResultCard({ hit, indexUid }: { hit: SearchResult; indexUid: string }) 
       >
         <div className="flex items-start justify-between mb-2">
           <h4 className="text-lg font-semibold text-gray-900">
-            {hit.white_player} vs {hit.black_player}
+            {String(hit.white_player)} vs {String(hit.black_player)}
           </h4>
-          <span className="text-sm font-medium text-gray-600">{hit.result}</span>
+          <span className="text-sm font-medium text-gray-600">{String(hit.result)}</span>
         </div>
         <div className="text-sm text-gray-600 space-y-1">
-          {hit.opening_name && (
+          {Boolean(hit.opening_name) && (
             <p>
-              <span className="font-medium">Opening:</span> {hit.opening_name}{' '}
-              {hit.opening_eco && `(${hit.opening_eco})`}
+              <span className="font-medium">Opening:</span> {String(hit.opening_name)}{' '}
+              {hit.opening_eco ? `(${String(hit.opening_eco)})` : ''}
             </p>
           )}
-          {hit.tournament_name && (
+          {Boolean(hit.tournament_name) && (
             <p>
-              <span className="font-medium">Tournament:</span> {hit.tournament_name}
+              <span className="font-medium">Tournament:</span> {String(hit.tournament_name)}
             </p>
           )}
-          {hit.date && (
+          {Boolean(hit.date) && (
             <p>
-              <span className="font-medium">Date:</span> {hit.date}
+              <span className="font-medium">Date:</span> {String(hit.date)}
             </p>
           )}
-          {hit.has_annotations && (
+          {Boolean(hit.has_annotations) && (
             <p className="text-blue-600 font-medium">✓ Has annotations</p>
           )}
         </div>
@@ -396,19 +396,19 @@ function ResultCard({ hit, indexUid }: { hit: SearchResult; indexUid: string }) 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-start justify-between mb-2">
           <h4 className="text-lg font-semibold text-gray-900">
-            {hit.white_player} vs {hit.black_player}
+            {String(hit.white_player)} vs {String(hit.black_player)}
           </h4>
           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-            {hit.composition_type}
+            {String(hit.composition_type)}
           </span>
         </div>
         <div className="text-sm text-gray-600 space-y-1">
           <p>
-            <span className="font-medium">Status:</span> {hit.status}
+            <span className="font-medium">Status:</span> {String(hit.status)}
           </p>
-          {hit.has_youtube_url && hit.youtube_url && (
+          {Boolean(hit.has_youtube_url) && Boolean(hit.youtube_url) && (
             <a
-              href={hit.youtube_url}
+              href={String(hit.youtube_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
@@ -427,27 +427,27 @@ function ResultCard({ hit, indexUid }: { hit: SearchResult; indexUid: string }) 
         href={`/tournaments/${hit.id}`}
         className="block bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
       >
-        <h4 className="text-lg font-semibold text-gray-900 mb-2">{hit.name}</h4>
+        <h4 className="text-lg font-semibold text-gray-900 mb-2">{String(hit.name)}</h4>
         <div className="text-sm text-gray-600 space-y-1">
-          {hit.location && (
+          {Boolean(hit.location) && (
             <p>
-              <span className="font-medium">Location:</span> {hit.location}
+              <span className="font-medium">Location:</span> {String(hit.location)}
             </p>
           )}
-          {hit.tournament_type && (
+          {Boolean(hit.tournament_type) && (
             <p>
               <span className="font-medium">Type:</span>{' '}
-              <span className="capitalize">{hit.tournament_type.replace(/_/g, ' ')}</span>
+              <span className="capitalize">{String(hit.tournament_type).replace(/_/g, ' ')}</span>
             </p>
           )}
-          {hit.start_date && (
+          {Boolean(hit.start_date) && (
             <p>
               <span className="font-medium">Date:</span>{' '}
-              {new Date(hit.start_date).toLocaleDateString()}
+              {new Date(String(hit.start_date)).toLocaleDateString()}
             </p>
           )}
           <p>
-            <span className="font-medium">Games:</span> {hit.game_count || 0}
+            <span className="font-medium">Games:</span> {Number(hit.game_count) || 0}
           </p>
         </div>
       </Link>
@@ -460,26 +460,26 @@ function ResultCard({ hit, indexUid }: { hit: SearchResult; indexUid: string }) 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-start justify-between mb-2">
           <h4 className="text-lg font-semibold text-gray-900">
-            {isFide ? hit.full_name : hit.username}
+            {isFide ? String(hit.full_name) : String(hit.username)}
           </h4>
           <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
-            {isFide ? 'FIDE' : hit.platform}
+            {isFide ? 'FIDE' : String(hit.platform)}
           </span>
         </div>
         <div className="text-sm text-gray-600 space-y-1">
-          {hit.title && (
+          {Boolean(hit.title) && (
             <p>
-              <span className="font-medium">Title:</span> {hit.title}
+              <span className="font-medium">Title:</span> {String(hit.title)}
             </p>
           )}
-          {hit.country_code && (
+          {Boolean(hit.country_code) && (
             <p>
-              <span className="font-medium">Country:</span> {hit.country_code}
+              <span className="font-medium">Country:</span> {String(hit.country_code)}
             </p>
           )}
-          {!isFide && hit.total_games_analyzed > 0 && (
+          {!isFide && Number(hit.total_games_analyzed) > 0 && (
             <p>
-              <span className="font-medium">Games analyzed:</span> {hit.total_games_analyzed}
+              <span className="font-medium">Games analyzed:</span> {Number(hit.total_games_analyzed)}
             </p>
           )}
         </div>
@@ -493,5 +493,14 @@ function ResultCard({ hit, indexUid }: { hit: SearchResult; indexUid: string }) 
         {JSON.stringify(hit, null, 2)}
       </pre>
     </div>
+  );
+}
+
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
