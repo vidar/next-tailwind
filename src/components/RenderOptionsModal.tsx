@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export interface RenderOptions {
-  compositionType: "walkthrough" | "annotated";
+  compositionType: "walkthrough" | "annotated" | "highlights" | "puzzle";
   aspectRatio: "landscape" | "portrait";
   orientation: "white" | "black";
   musicGenre: string;
@@ -37,7 +37,7 @@ export function RenderOptionsModal({
   hasAnnotations,
   initialOrientation = "white",
 }: RenderOptionsModalProps) {
-  const [compositionType, setCompositionType] = useState<"walkthrough" | "annotated">("walkthrough");
+  const [compositionType, setCompositionType] = useState<"walkthrough" | "annotated" | "highlights" | "puzzle">("walkthrough");
   const [aspectRatio, setAspectRatio] = useState<"landscape" | "portrait">("landscape");
   const [orientation, setOrientation] = useState<"white" | "black">(initialOrientation);
   const [musicGenre, setMusicGenre] = useState("none");
@@ -81,17 +81,24 @@ export function RenderOptionsModal({
             </label>
             <select
               value={compositionType}
-              onChange={(e) => setCompositionType(e.target.value as "walkthrough" | "annotated")}
-              disabled={!hasAnnotations && compositionType === "annotated"}
+              onChange={(e) => setCompositionType(e.target.value as "walkthrough" | "annotated" | "highlights" | "puzzle")}
+              disabled={(!hasAnnotations && compositionType === "annotated") || (!hasAnnotations && compositionType === "puzzle")}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg font-medium transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
             >
               <option value="walkthrough">Walkthrough</option>
               <option value="annotated" disabled={!hasAnnotations}>
                 Annotated {!hasAnnotations ? "(no annotations)" : ""}
               </option>
+              <option value="highlights">Cinematic Highlights</option>
+              <option value="puzzle" disabled={!hasAnnotations}>
+                Puzzle Mode {!hasAnnotations ? "(no annotations)" : ""}
+              </option>
             </select>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Walkthrough shows the game moves, Annotated includes your commentary
+              {compositionType === "walkthrough" && "Quick game playthrough with all moves"}
+              {compositionType === "annotated" && "Full game with your commentary overlays"}
+              {compositionType === "highlights" && "Dramatic short showcasing key moments only"}
+              {compositionType === "puzzle" && "Interactive-style learning with puzzle challenges"}
             </p>
           </div>
 
@@ -197,7 +204,7 @@ export function RenderOptionsModal({
           </button>
           <button
             onClick={handleRender}
-            disabled={compositionType === "annotated" && !hasAnnotations}
+            disabled={(compositionType === "annotated" && !hasAnnotations) || (compositionType === "puzzle" && !hasAnnotations)}
             className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Start Rendering

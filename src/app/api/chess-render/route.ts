@@ -13,7 +13,7 @@ import {
 import { ChessRenderRequest } from "../../../../types/schema";
 import { executeApi } from "../../../helpers/api-response";
 import { getAnalysisById, createVideo, getAnnotationsByGameId, type GameAnnotation } from "@/lib/db";
-import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, ASPECT_RATIOS } from "../../../../types/constants";
+import { CHESS_GAME_COMP_NAME, CHESS_GAME_ANNOTATED_COMP_NAME, CHESS_GAME_HIGHLIGHTS_COMP_NAME, CHESS_GAME_PUZZLE_COMP_NAME, ASPECT_RATIOS } from "../../../../types/constants";
 import { generateChapters, generateDescription } from "@/lib/youtube-metadata";
 import { auth } from "@clerk/nextjs/server";
 
@@ -91,13 +91,22 @@ export const POST = executeApi<
     }
     inputProps.annotations = annotations;
     compositionId = CHESS_GAME_ANNOTATED_COMP_NAME;
+  } else if (compositionType === "highlights") {
+    compositionId = CHESS_GAME_HIGHLIGHTS_COMP_NAME;
+  } else if (compositionType === "puzzle") {
+    annotations = await getAnnotationsByGameId(body.gameId);
+    if (annotations.length === 0) {
+      throw new Error("Cannot render puzzle video without annotations");
+    }
+    inputProps.annotations = annotations;
+    compositionId = CHESS_GAME_PUZZLE_COMP_NAME;
   }
 
   // Generate YouTube metadata (chapters, description, etc.)
   const chapters = generateChapters(
     analysis.pgn,
     annotations,
-    compositionType as 'walkthrough' | 'annotated'
+    compositionType as 'walkthrough' | 'annotated' | 'highlights' | 'puzzle'
   );
 
   const description = generateDescription(
