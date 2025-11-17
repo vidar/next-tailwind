@@ -91,6 +91,12 @@ export default function RootLayout({
                 >
                   Tournaments
                 </Link>
+                <Link
+                  href="/blog"
+                  className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors"
+                >
+                  Blog
+                </Link>
               </nav>
 
               {/* Auth Buttons */}
