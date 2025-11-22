@@ -5,7 +5,6 @@ import Link from "next/link";
 import { trackEvent } from "@/lib/posthog";
 
 type Platform = "chess.com" | "lichess" | "manual";
-type AnalysisDepth = 20 | 30 | 40;
 
 interface ChessGame {
   id: string;
@@ -14,11 +13,6 @@ interface ChessGame {
   result: string;
   date: string;
   pgn?: string;
-}
-
-interface AnalysisConfig {
-  depth: AnalysisDepth;
-  find_alternatives: boolean;
 }
 
 interface SearchHistoryItem {
@@ -36,12 +30,7 @@ export default function ImportPage() {
   const [selectedGames, setSelectedGames] = useState<Set<string>>(new Set());
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
 
-  // Modal state
-  const [showModal, setShowModal] = useState(false);
-  const [analysisConfig, setAnalysisConfig] = useState<AnalysisConfig>({
-    depth: 20,
-    find_alternatives: false,
-  });
+  // Analysis state
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState<string[]>([]);
 
@@ -164,7 +153,7 @@ export default function ImportPage() {
   };
 
   const importSelectedGames = () => {
-    setShowModal(true);
+    analyzeGames();
   };
 
   const analyzeGames = async () => {
@@ -179,11 +168,6 @@ export default function ImportPage() {
 
     setAnalyzing(true);
     setAnalysisProgress(["Starting analysis..."]);
-
-    // Close modal after a brief delay
-    setTimeout(() => {
-      setShowModal(false);
-    }, 800);
 
     for (const game of gamesToAnalyze) {
       if (!game.pgn) {
@@ -207,8 +191,8 @@ export default function ImportPage() {
           },
           body: JSON.stringify({
             pgn: game.pgn,
-            depth: analysisConfig.depth,
-            find_alternatives: analysisConfig.find_alternatives,
+            depth: 20,
+            find_alternatives: true,
           }),
         });
 
@@ -224,8 +208,8 @@ export default function ImportPage() {
 
         // Track successful analysis
         trackEvent('game_analyzed', {
-          depth: analysisConfig.depth,
-          find_alternatives: analysisConfig.find_alternatives,
+          depth: 20,
+          find_alternatives: true,
         });
 
         console.log("Analysis result:", result);
@@ -241,11 +225,6 @@ export default function ImportPage() {
 
     setAnalyzing(false);
     setAnalysisProgress((prev) => [...prev, "All analyses complete!"]);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setAnalysisProgress([]);
   };
 
   return (
@@ -376,7 +355,7 @@ export default function ImportPage() {
         </div>
 
         {/* Analysis Progress Display */}
-        {!showModal && analysisProgress.length > 0 && (
+        {analysisProgress.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">
@@ -453,104 +432,6 @@ export default function ImportPage() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Analysis Configuration Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-              <h2 className="text-2xl font-bold mb-4">
-                Configure Analysis
-              </h2>
-
-              {/* Depth Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-3">
-                  Analysis Depth
-                </label>
-                <div className="flex gap-3">
-                  {[20, 30, 40].map((depth) => (
-                    <button
-                      key={depth}
-                      onClick={() =>
-                        setAnalysisConfig((prev) => ({
-                          ...prev,
-                          depth: depth as AnalysisDepth,
-                        }))
-                      }
-                      className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
-                        analysisConfig.depth === depth
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-                      }`}
-                    >
-                      {depth}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                  Higher depth = more accurate but slower
-                </p>
-              </div>
-
-              {/* Find Alternatives Toggle */}
-              <div className="mb-6">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={analysisConfig.find_alternatives}
-                    onChange={(e) =>
-                      setAnalysisConfig((prev) => ({
-                        ...prev,
-                        find_alternatives: e.target.checked,
-                      }))
-                    }
-                    className="w-5 h-5 mr-3"
-                  />
-                  <div>
-                    <span className="font-medium">Find Alternatives</span>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Search for better move alternatives
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* Progress Display */}
-              {analysisProgress.length > 0 && (
-                <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg max-h-48 overflow-y-auto">
-                  <div className="space-y-1">
-                    {analysisProgress.map((msg, idx) => (
-                      <div
-                        key={idx}
-                        className="text-sm text-gray-800 dark:text-gray-200"
-                      >
-                        {msg}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={closeModal}
-                  disabled={analyzing}
-                  className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={analyzeGames}
-                  disabled={analyzing}
-                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  {analyzing ? "Analyzing..." : "Start Analysis"}
-                </button>
-              </div>
             </div>
           </div>
         )}
