@@ -106,43 +106,33 @@ export default function AnalyzedGamesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md divide-y divide-gray-200 dark:divide-gray-700">
             {analyses.map((analysis) => {
               const gameInfo = extractGameInfo(analysis.pgn);
               return (
                 <div
                   key={analysis.id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                  className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                   onClick={() => router.push(`/analyzed_games/${analysis.id}`)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-semibold mb-2">
-                        {gameInfo.white} vs {gameInfo.black}
-                      </h2>
-                      <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                        <div>
-                          <span className="font-medium">Result:</span>{" "}
-                          {gameInfo.result}
-                        </div>
-                        <div>
-                          <span className="font-medium">Analysis Depth:</span>{" "}
-                          {analysis.analysis_config.depth}
-                        </div>
-                        <div>
-                          <span className="font-medium">Find Alternatives:</span>{" "}
-                          {analysis.analysis_config.find_alternatives ? "Yes" : "No"}
-                        </div>
-                        <div>
-                          <span className="font-medium">Completed:</span>{" "}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-3 flex-wrap">
+                        <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                          {gameInfo.white} vs {gameInfo.black}
+                        </h2>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          Result: {gameInfo.result}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-500">
                           {analysis.completed_at
                             ? formatDate(analysis.completed_at)
                             : "N/A"}
-                        </div>
+                        </span>
                       </div>
                     </div>
-                    <div className="ml-4">
-                      <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+                    <div className="flex-shrink-0">
+                      <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs font-medium">
                         Completed
                       </span>
                     </div>

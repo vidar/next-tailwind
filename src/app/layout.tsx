@@ -73,12 +73,13 @@ export default function RootLayout({
                 >
                   Home
                 </Link>
-                <Link
+                {/* Search feature temporarily disabled */}
+                {/* <Link
                   href="/search"
                   className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors"
                 >
                   Search
-                </Link>
+                </Link> */}
                 <Link
                   href="/import"
                   className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors"

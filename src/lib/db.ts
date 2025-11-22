@@ -26,6 +26,7 @@ export function getPool(): Pool {
 
 export interface ChessAnalysis {
   id: string;
+  user_id?: string;
   pgn: string;
   game_data: JsonValue;
   analysis_config: {
@@ -41,8 +42,17 @@ export interface ChessAnalysis {
   completed_at: string | null;
 }
 
-export async function getCompletedAnalyses(): Promise<ChessAnalysis[]> {
+export async function getCompletedAnalyses(userId?: string): Promise<ChessAnalysis[]> {
   const pool = getPool();
+  if (userId) {
+    const result = await pool.query(
+      `SELECT * FROM chess_analyses
+       WHERE status = 'completed' AND user_id = $1
+       ORDER BY completed_at DESC`,
+      [userId]
+    );
+    return result.rows;
+  }
   const result = await pool.query(
     `SELECT * FROM chess_analyses
      WHERE status = 'completed'
@@ -63,14 +73,16 @@ export async function getAnalysisById(id: string): Promise<ChessAnalysis | null>
 export async function createPendingAnalysis(
   pgn: string,
   depth: number,
-  findAlternatives: boolean
+  findAlternatives: boolean,
+  userId?: string
 ): Promise<ChessAnalysis> {
   const pool = getPool();
   const result = await pool.query(
-    `INSERT INTO chess_analyses (id, pgn, game_data, analysis_config, status, progress, created_at, updated_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, 'pending', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `INSERT INTO chess_analyses (id, user_id, pgn, game_data, analysis_config, status, progress, created_at, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, 'pending', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
      RETURNING *`,
     [
+      userId || null,
       pgn,
       JSON.stringify({}), // Empty game data initially
       JSON.stringify({ depth, find_alternatives: findAlternatives })
